@@ -1,0 +1,365 @@
+{{/*
+Détail d'un modèle (/modeles/{id}) : la fiche complète (financement, coûts,
+description) en formulaire toujours visible — pas de bascule lecture/édition
+comme les référentiels, ces champs ne se saisissent qu'ici, jamais à la
+création (voir templates/modeles/liste.html) — puis la liste des révisions,
+chacune avec ses composants et ses nœuds par technologie.
+
+LE POINT SENSIBLE est l'immuabilité des révisions (CLAUDE.md « Les révisions
+de modèle sont immuables », docs/modele-donnees.md §12 invariant 1). Le
+formulaire d'édition d'une révision porte une case à cocher explicite,
+jamais cochée par défaut :
+
+  ☐ « Corriger une erreur de saisie (n'affecte pas l'historique matériel) »
+
+  - décochée + révision référencée par du matériel → le serveur refuse
+    (ErrImmuable), le formulaire d'édition se réaffiche avec le message,
+    rien n'est appliqué.
+  - décochée + révision non référencée → s'applique normalement.
+  - cochée → s'applique toujours ; si le dépôt signale l'avertissement
+    (ModifierRevision renvoie avertissement=true), un bandeau visible
+    l'affiche — jamais silencieux.
+
+Composants et nœuds portent la même case, avec les mêmes règles
+(AjouterComposant/ModifierComposant/SupprimerComposant/DefinirNoeuds prennent
+tous un paramètre correction bool) : deux actions, deux libellés distincts,
+jamais fusionnés.
+
+Fragments (voir handlers_modele.go pour le contexte Go de chacun) :
+  - "modele_page"        page complète
+  - "modele_champs"       formulaire des champs du modèle (div id="modele-champs",
+                           cible de PUT /modeles/{id})
+  - "modele_revisions"    liste des révisions (div id="revisions-{ModeleID}")
+  - "revision_bloc"       une révision + ses composants + ses nœuds
+                           (div id="revision-{ID}"), lecture ou édition selon .Editant
+  - "composants_tableau"  table des composants d'une révision
+                           (div id="composants-{RevisionID}")
+  - "composants_ligne", "composants_ligne_edition"  une ligne de composant,
+                           patron projets_ligne / projets_ligne_edition — la case
+                           « corriger » est dans la ligne d'édition, et aussi dans
+                           la ligne de lecture (elle sert aussi à Supprimer, qui
+                           n'a pas d'étape d'édition préalable)
+  - "noeuds_tableau", "noeud_ligne"  table toujours éditable (une ligne par
+                           techno active, valeur 0 si jamais définie) — pas de
+                           bascule lecture/édition, la case « corriger » est
+                           directement dans la ligne
+*/}}
+
+{{define "modele_page"}}
+<p><a href="/modeles">&larr; {{t "nav.modeles"}}</a></p>
+<h1>{{.Modele.Code}}</h1>
+<p class="sous-titre">{{.Modele.Type}} — {{.Modele.Annee}}</p>
+
+{{template "modele_champs" .Modele}}
+
+<h2>{{t "modeles.revisions_titre"}}</h2>
+<p class="sous-titre">
+  {{t "modeles.revisions_explication"}}
+</p>
+
+{{template "modele_revisions" .RevisionsBloc}}
+
+<div class="carte" style="margin-top:18px">
+<h2 style="margin-top:0">{{t "modeles.revision_nouvelle"}}</h2>
+<form hx-post="/modeles/{{.RevisionsBloc.ModeleID}}/revisions"
+      hx-target="#revisions-{{.RevisionsBloc.ModeleID}}" hx-swap="outerHTML">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:2; min-width:200px; margin:0;">{{t "modeles.champ_libelle"}}
+      <input type="text" name="libelle" maxlength="200" placeholder="ajout 8 SSD 3,84 To">
+    </label>
+    <label style="flex:1; min-width:160px; margin:0;">{{t "modeles.champ_date_effet"}}
+      <input type="date" name="date_effet" required>
+    </label>
+    <label style="flex:2; min-width:200px; margin:0;">{{t "modeles.champ_commentaire"}}
+      <input type="text" name="commentaire" maxlength="500">
+    </label>
+    <button type="submit">{{t "modeles.revision_creer"}}</button>
+  </div>
+</form>
+</div>
+
+<div hx-get="/journal/historique/modele/{{.Modele.ID}}" hx-trigger="load" hx-swap="outerHTML"></div>
+{{end}}
+
+{{/* ---------------------------------------------------------- champs du modèle */}}
+
+{{define "modele_champs"}}
+<div class="carte" id="modele-champs" style="margin-bottom:18px">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<form hx-put="/modeles/{{.ID}}" hx-target="#modele-champs" hx-swap="outerHTML">
+  <div style="display:grid; grid-template-columns:repeat(3, minmax(150px,1fr)); gap:12px;">
+    <label>{{t "modeles.champ_type"}}
+      <input type="text" name="type" value="{{.Type}}" required maxlength="80">
+    </label>
+    <label>{{t "modeles.champ_annee"}}
+      <input type="number" name="annee" value="{{.Annee}}" required min="2001" step="1">
+    </label>
+    <label>{{t "commun.code"}}
+      <input type="text" name="code" value="{{.Code}}" required maxlength="80">
+    </label>
+    {{$fin := videSiNil .ModeFinancement}}
+    <label>{{t "modeles.champ_financement"}}
+      <select name="mode_financement">
+        <option value="" {{if eq $fin ""}}selected{{end}}>—</option>
+        <option value="ACHAT" {{if eq $fin "ACHAT"}}selected{{end}}>{{t "modeles.financement_achat"}}</option>
+        <option value="LEASE" {{if eq $fin "LEASE"}}selected{{end}}>{{t "modeles.financement_lease"}}</option>
+      </select>
+    </label>
+    <label>{{t "modeles.champ_duree_lease"}}
+      <input type="number" name="duree_lease_mois" value="{{.DureeLeaseMoisTexte}}" min="1" step="1">
+    </label>
+    <label>{{t "modeles.champ_debut_lease"}}
+      <input type="date" name="date_debut_lease" value="{{videSiNil .DateDebutLease}}">
+    </label>
+    <label>{{t "modeles.champ_prix_fournisseur"}}
+      <input type="number" name="prix_fournisseur_ht" value="{{.PrixFournisseurHTTexte}}" step="0.01" min="0">
+    </label>
+    <label>{{t "modeles.champ_cout_annuel"}}
+      <input type="number" name="cout_annuel_ht" value="{{.CoutAnnuelHTTexte}}" step="0.01" min="0">
+    </label>
+    <label>{{t "modeles.champ_duree_cout"}}
+      <input type="number" name="duree_cout_annees" value="{{.DureeCoutAnneesTexte}}" min="1" step="1">
+    </label>
+    <label style="grid-column: 1 / -1;">{{t "modeles.champ_description"}}
+      <input type="text" name="description" value="{{videSiNil .Description}}" maxlength="500">
+    </label>
+  </div>
+  {{if .FinLease}}<p class="sous-titre">{{t "modeles.fin_lease_calculee"}} <strong>{{.FinLease}}</strong></p>{{end}}
+  <button type="submit">{{t "commun.enregistrer"}}</button>
+</form>
+</div>
+{{end}}
+
+{{/* ---------------------------------------------------------- révisions */}}
+
+{{define "modele_revisions"}}
+<div id="revisions-{{.ModeleID}}">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+{{range .Revisions}}{{template "revision_bloc" .}}{{else}}
+<p class="vide">{{t "modeles.revision_aucune_liste"}}</p>
+{{end}}
+</div>
+{{end}}
+
+{{define "revision_bloc"}}
+<div class="carte" id="revision-{{.ID}}" style="margin-bottom:16px">
+  {{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+  {{if .Avertissement}}
+  <p class="message-erreur" style="background:#fff6da; color:#7a5b00; border-color:#f4e08c; font-weight:600;">
+    ⚠ {{.Avertissement}}
+  </p>
+  {{end}}
+
+  {{if .Editant}}
+  <form hx-put="/modeles/{{.ModeleID}}/revisions/{{.ID}}" hx-target="#revision-{{.ID}}" hx-swap="outerHTML">
+    <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+      <label style="flex:2; min-width:200px; margin:0;">{{t "modeles.champ_libelle"}}
+        <input type="text" name="libelle" value="{{videSiNil .Libelle}}" maxlength="200">
+      </label>
+      <label style="flex:1; min-width:160px; margin:0;">{{t "modeles.champ_date_effet"}}
+        <input type="date" name="date_effet" value="{{.DateEffet}}" required>
+      </label>
+      <label style="flex:2; min-width:200px; margin:0;">{{t "modeles.champ_commentaire"}}
+        <input type="text" name="commentaire" value="{{videSiNil .Commentaire}}" maxlength="500">
+      </label>
+    </div>
+    <label style="display:flex; align-items:center; gap:6px; margin:10px 0; font-size:13px; color:var(--texte);">
+      <input type="checkbox" name="corriger" value="1">
+      {{t "modeles.corriger_label"}}
+    </label>
+    <div class="actions-ligne" style="justify-content:flex-start">
+      <button type="submit">{{t "commun.enregistrer"}}</button>
+      <button type="button" class="bouton-discret"
+              hx-get="/modeles/{{.ModeleID}}/revisions/{{.ID}}" hx-target="#revision-{{.ID}}" hx-swap="outerHTML">{{t "commun.annuler"}}</button>
+    </div>
+  </form>
+  {{else}}
+  <div class="barre-outils">
+    <div>
+      <strong>{{t "modeles.revision_label"}} {{.Numero}}</strong>{{if .Libelle}} — {{.Libelle}}{{end}} — {{t "modeles.revision_effet"}} {{.DateEffet}}
+      {{if .Referencee}}<span class="badge">{{t "modeles.revision_referencee"}}</span>{{end}}
+      {{if .Commentaire}}<div class="sous-titre" style="margin:4px 0 0">{{.Commentaire}}</div>{{end}}
+    </div>
+    <button class="bouton-discret bouton-petit"
+            hx-get="/modeles/{{.ModeleID}}/revisions/{{.ID}}/editer" hx-target="#revision-{{.ID}}" hx-swap="outerHTML">{{t "commun.modifier"}}</button>
+  </div>
+  {{end}}
+
+  {{template "composants_tableau" .ComposantsBloc}}
+  {{template "noeuds_tableau" .NoeudsBloc}}
+</div>
+{{end}}
+
+{{/* ---------------------------------------------------------- composants */}}
+
+{{define "composants_tableau"}}
+<div id="composants-{{.RevisionID}}">
+<div class="barre-outils" style="margin:16px 0 8px;">
+  <h3 style="margin:0">{{t "modeles.composants_titre"}}</h3>
+  {{template "export_boutons" .Export}}
+</div>
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<table>
+  <thead><tr>
+    <th>{{t "modeles.champ_nature"}}</th><th>{{t "commun.code"}}</th><th>{{t "modeles.champ_quantite"}}</th><th>{{t "modeles.champ_capacite_unitaire"}}</th><th>{{t "modeles.champ_unite"}}</th><th>{{t "modeles.champ_commentaire"}}</th><th></th>
+  </tr></thead>
+  <tbody>
+    {{range .Composants}}{{template "composants_ligne" .}}{{else}}
+    <tr><td colspan="7" class="vide">{{t "modeles.composants_aucun"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+<form hx-post="/modeles/{{.ModeleID}}/revisions/{{.RevisionID}}/composants"
+      hx-target="#composants-{{.RevisionID}}" hx-swap="outerHTML"
+      style="margin-top:10px; display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;">
+  <label style="margin:0; min-width:120px;">{{t "modeles.champ_nature"}}
+    <select name="nature">
+      <option value="CPU">CPU</option>
+      <option value="RAM">RAM</option>
+      <option value="DISQUE_DATA">{{t "modeles.nature_disque"}}</option>
+      <option value="GPU">GPU</option>
+      <option value="NIC">NIC</option>
+      <option value="AUTRE">{{t "modeles.nature_autre"}}</option>
+    </select>
+  </label>
+  <label style="margin:0; min-width:110px;">{{t "commun.code"}}
+    <input type="text" name="code" required maxlength="60" placeholder="ssd" title="Codes connus des vues et de l'import : cpu, specrate, phoronix, ram, hdd, ssd, nic, gpu, gpu_ram, gpu_fp8, gpu_bp">
+  </label>
+  <label style="margin:0; min-width:80px;">{{t "modeles.champ_quantite"}}
+    <input type="number" name="quantite" required step="any" min="0">
+  </label>
+  <label style="margin:0; min-width:120px;">{{t "modeles.champ_capacite_unitaire"}}
+    <input type="number" name="capacite_unitaire" required step="any" min="0">
+  </label>
+  <label style="margin:0; min-width:90px;">{{t "modeles.champ_unite"}}
+    <select name="unite">
+      <option value="TO">{{t "modeles.unite_to"}}</option>
+      <option value="GO">{{t "modeles.unite_go"}}</option>
+      <option value="CORE">{{t "modeles.unite_coeurs"}}</option>
+      <option value="GBPS">Gbps</option>
+      <option value="POINT">{{t "modeles.unite_points"}}</option>
+      <option value="TFLOPS">TFLOPS</option>
+      <option value="TOS">{{t "modeles.unite_tos"}}</option>
+      <option value="UNITE">{{t "modeles.unite_valeur"}}</option>
+    </select>
+  </label>
+  <label style="margin:0; min-width:150px;">{{t "modeles.champ_commentaire"}}
+    <input type="text" name="commentaire" maxlength="300">
+  </label>
+  <label style="margin:0 0 7px; display:flex; align-items:center; gap:4px; font-size:11px; color:var(--texte-discret);">
+    <input type="checkbox" name="corriger" value="1"> {{t "modeles.corriger_court"}}
+  </label>
+  <button type="submit">{{t "commun.ajouter"}}</button>
+</form>
+</div>
+{{end}}
+
+{{define "composants_ligne"}}
+<tr id="composant-{{.ID}}">
+  <td>{{.Nature}}</td>
+  <td>{{.Code}}</td>
+  <td>{{.Quantite}}</td>
+  <td>{{.CapaciteUnitaire}}</td>
+  <td>{{.Unite}}</td>
+  <td>
+    {{videSiNil .Commentaire}}
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td class="actions-ligne">
+    <label style="display:inline-flex; align-items:center; gap:3px; font-size:11px; color:var(--texte-discret); margin:0;">
+      <input type="checkbox" name="corriger" value="1"> {{t "modeles.corriger_court"}}
+    </label>
+    <button class="bouton-discret bouton-petit"
+            hx-get="/modeles/{{.ModeleID}}/revisions/{{.RevisionID}}/composants/{{.ID}}/editer"
+            hx-target="#composant-{{.ID}}" hx-swap="outerHTML">{{t "commun.modifier"}}</button>
+    <button class="bouton-discret bouton-petit"
+            hx-post="/modeles/{{.ModeleID}}/revisions/{{.RevisionID}}/composants/{{.ID}}/supprimer"
+            hx-include="closest tr" hx-target="#composants-{{.RevisionID}}" hx-swap="outerHTML"
+            hx-confirm="{{t "modeles.confirmer_supprimer_composant"}}">{{t "commun.supprimer"}}</button>
+  </td>
+</tr>
+{{end}}
+
+{{define "composants_ligne_edition"}}
+<tr id="composant-{{.ID}}">
+  <td>
+    <select name="nature">
+      <option value="CPU" {{if eq .Nature "CPU"}}selected{{end}}>CPU</option>
+      <option value="RAM" {{if eq .Nature "RAM"}}selected{{end}}>RAM</option>
+      <option value="DISQUE_DATA" {{if eq .Nature "DISQUE_DATA"}}selected{{end}}>{{t "modeles.nature_disque"}}</option>
+      <option value="GPU" {{if eq .Nature "GPU"}}selected{{end}}>GPU</option>
+      <option value="NIC" {{if eq .Nature "NIC"}}selected{{end}}>NIC</option>
+      <option value="AUTRE" {{if eq .Nature "AUTRE"}}selected{{end}}>{{t "modeles.nature_autre"}}</option>
+    </select>
+  </td>
+  <td><input type="text" name="code" value="{{.Code}}" required maxlength="60"></td>
+  <td><input type="number" name="quantite" value="{{.Quantite}}" required step="any" min="0"></td>
+  <td><input type="number" name="capacite_unitaire" value="{{.CapaciteUnitaire}}" required step="any" min="0"></td>
+  <td>
+    <select name="unite">
+      <option value="TO" {{if eq .Unite "TO"}}selected{{end}}>{{t "modeles.unite_to"}}</option>
+      <option value="GO" {{if eq .Unite "GO"}}selected{{end}}>{{t "modeles.unite_go"}}</option>
+      <option value="CORE" {{if eq .Unite "CORE"}}selected{{end}}>{{t "modeles.unite_coeurs"}}</option>
+      <option value="GBPS" {{if eq .Unite "GBPS"}}selected{{end}}>Gbps</option>
+      <option value="POINT" {{if eq .Unite "POINT"}}selected{{end}}>{{t "modeles.unite_points"}}</option>
+      <option value="TFLOPS" {{if eq .Unite "TFLOPS"}}selected{{end}}>TFLOPS</option>
+      <option value="TOS" {{if eq .Unite "TOS"}}selected{{end}}>{{t "modeles.unite_tos"}}</option>
+      <option value="UNITE" {{if eq .Unite "UNITE"}}selected{{end}}>{{t "modeles.unite_valeur"}}</option>
+    </select>
+  </td>
+  <td>
+    <input type="text" name="commentaire" value="{{videSiNil .Commentaire}}" maxlength="300">
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td class="actions-ligne">
+    <label style="display:inline-flex; align-items:center; gap:3px; font-size:11px; color:var(--texte-discret); margin:0;">
+      <input type="checkbox" name="corriger" value="1"> {{t "modeles.corriger_court"}}
+    </label>
+    <button class="bouton-petit"
+            hx-put="/modeles/{{.ModeleID}}/revisions/{{.RevisionID}}/composants/{{.ID}}"
+            hx-include="closest tr" hx-target="#composant-{{.ID}}" hx-swap="outerHTML">{{t "commun.enregistrer"}}</button>
+    <button type="button" class="bouton-discret bouton-petit"
+            hx-get="/modeles/{{.ModeleID}}/revisions/{{.RevisionID}}/composants/{{.ID}}"
+            hx-target="#composant-{{.ID}}" hx-swap="outerHTML">{{t "commun.annuler"}}</button>
+  </td>
+</tr>
+{{end}}
+
+{{/* ---------------------------------------------------------- nœuds par techno */}}
+
+{{define "noeuds_tableau"}}
+<div id="noeuds-{{.RevisionID}}">
+<div class="barre-outils" style="margin:16px 0 8px;">
+  <h3 style="margin:0">{{t "modeles.noeuds_titre"}}</h3>
+  {{template "export_boutons" .Export}}
+</div>
+<table>
+  <thead><tr><th>{{t "modeles.champ_techno"}}</th><th>{{t "modeles.champ_nb_noeuds"}}</th><th></th></tr></thead>
+  <tbody>
+    {{range .Noeuds}}{{template "noeud_ligne" .}}{{else}}
+    <tr><td colspan="3" class="vide">{{t "modeles.noeuds_aucune"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "noeud_ligne"}}
+<tr id="noeud-{{.RevisionID}}-{{.TechnoID}}">
+  <td>{{.TechnoLibelle}} <span class="badge">{{.TechnoCode}}</span></td>
+  <td>
+    <input type="number" name="nb_noeuds" value="{{.NbNoeuds}}" min="0" step="1">
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td class="actions-ligne">
+    <label style="display:inline-flex; align-items:center; gap:3px; font-size:11px; color:var(--texte-discret); margin:0;">
+      <input type="checkbox" name="corriger" value="1"> {{t "modeles.corriger_court"}}
+    </label>
+    <button class="bouton-petit"
+            hx-put="/modeles/{{.ModeleID}}/revisions/{{.RevisionID}}/noeuds/{{.TechnoID}}"
+            hx-include="closest tr" hx-target="#noeud-{{.RevisionID}}-{{.TechnoID}}" hx-swap="outerHTML">
+      {{t "commun.enregistrer"}}
+    </button>
+  </td>
+</tr>
+{{end}}

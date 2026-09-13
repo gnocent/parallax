@@ -1,0 +1,44 @@
+{{/*
+Édition du gabarit global de description des demandes (backlog v3.2,
+docs/modele-donnees.md §10.1). Écran administrateur, formulaire classique
+(un textarea, le jeton CSRF en champ caché). La validation se fait à la
+saisie côté serveur : un gabarit refusé revient avec son texte et le message
+qui nomme le problème ; un gabarit accepté est enregistré et un aperçu est
+rendu sur le premier serveur réel de la base.
+*/}}
+
+{{define "parametres_gabarit_page"}}
+<h1>{{t "gabarit.titre"}}</h1>
+<p class="sous-titre">{{t "gabarit.sous_titre_1"}} <a href="/demandes">{{t "nav.demandes"}}</a>{{t "gabarit.sous_titre_2"}}</p>
+
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+{{if .Succes}}<p class="message-succes">{{.Succes}}</p>{{end}}
+
+<div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
+  <form class="carte" method="post" action="/parametres/gabarit" style="flex:2; min-width:320px;">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+    <label>{{t "gabarit.label_gabarit"}}
+      <textarea name="gabarit" rows="12" style="width:100%; font-family:monospace;" placeholder="Serveur {nom_physique} — {cluster}&#10;{modele} rév. {revision} : {cpu} cœurs, {ram} Go, {ssd} To SSD">{{.Gabarit}}</textarea>
+    </label>
+    <p class="sous-titre" style="margin:8px 0 12px;">
+      <code>{nom}</code> {{t "gabarit.syntaxe_1"}} <code>{{"{{"}}</code> {{t "gabarit.syntaxe_2"}} <code>{{"}}"}}</code> {{t "gabarit.syntaxe_3"}}
+      {{t "gabarit.retours_ligne"}} {{t "gabarit.variable_inconnue"}}
+    </p>
+    <button type="submit">{{t "commun.enregistrer"}}</button>
+  </form>
+
+  <div class="carte" style="flex:1; min-width:260px;">
+    <strong>{{t "gabarit.variables_disponibles"}}</strong>
+    <ul style="list-style:none; padding:0; margin:8px 0 0; font-size:13px; line-height:1.7;">
+      {{range .Variables}}<li><code>{{"{"}}{{.Nom}}{{"}"}}</code> — {{.Libelle}}</li>{{end}}
+    </ul>
+  </div>
+</div>
+
+{{if .Apercu}}
+<div class="carte" style="margin-top:18px;">
+  <strong>{{t "gabarit.apercu_titre"}}</strong> <span class="sous-titre">{{t "gabarit.apercu_sur"}} {{if .ApercuServeur}}{{.ApercuServeur}}{{else}}{{t "gabarit.premier_serveur"}}{{end}} — {{t "gabarit.valeurs_absentes"}}</span>
+  <pre style="margin:8px 0 0; white-space:pre-wrap; font-size:12px;">{{.Apercu}}</pre>
+</div>
+{{end}}
+{{end}}

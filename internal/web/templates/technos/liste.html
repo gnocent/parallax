@@ -1,0 +1,85 @@
+{{/*
+Écran Technos — copie conforme du patron projets (voir templates/projets/liste.html
+pour les conventions détaillées). Techno porte un drapeau d'activité comme
+Projet : Archiver/Réactiver, case "inclure les archivés", colonne Statut.
+*/}}
+
+{{define "technos_page"}}
+<h1>{{t "technos.titre"}}</h1>
+<p class="sous-titre">{{t "technos.sous_titre"}}</p>
+
+<form class="carte" style="margin-bottom:18px" hx-post="/technos"
+      hx-target="#tableau-technos" hx-swap="outerHTML"
+      hx-include="[name='inclure_inactifs']">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:1; min-width:140px; margin:0;">{{t "commun.code"}}
+      <input type="text" name="code" required maxlength="40" placeholder="ELASTIC">
+    </label>
+    <label style="flex:2; min-width:200px; margin:0;">{{t "commun.libelle"}}
+      <input type="text" name="libelle" required maxlength="200" placeholder="Elasticsearch">
+    </label>
+    <button type="submit">{{t "commun.ajouter"}}</button>
+  </div>
+</form>
+
+<div class="barre-outils">
+  <label style="margin:0; display:flex; align-items:center; gap:6px;">
+    <input type="checkbox" name="inclure_inactifs"
+           hx-get="/technos/tableau" hx-target="#tableau-technos" hx-swap="outerHTML">
+    {{t "technos.inclure_archives"}}
+  </label>
+</div>
+
+{{template "technos_tableau" .}}
+{{end}}
+
+{{define "technos_tableau"}}
+<div id="tableau-technos">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr><th>{{t "commun.code"}}</th><th>{{t "commun.libelle"}}</th><th>{{t "commun.statut"}}</th><th></th></tr></thead>
+  <tbody>
+    {{range .Technos}}{{template "technos_ligne" .}}{{else}}
+    <tr><td colspan="4" class="vide">{{t "technos.aucun"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "technos_ligne"}}
+<tr id="techno-{{.ID}}" class="{{if not .Actif}}inactif{{end}}">
+  <td>{{.Code}}</td>
+  <td>{{.Libelle}}{{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}</td>
+  <td>{{if .Actif}}<span class="badge badge-actif">{{t "commun.actif"}}</span>{{else}}<span class="badge badge-inactif">{{t "commun.archive"}}</span>{{end}}</td>
+  <td class="actions-ligne">
+    <button class="bouton-discret bouton-petit"
+            hx-get="/technos/{{.ID}}/editer" hx-target="#techno-{{.ID}}" hx-swap="outerHTML">{{t "commun.modifier"}}</button>
+    {{if .Actif}}
+    <button class="bouton-discret bouton-petit"
+            hx-post="/technos/{{.ID}}/archiver" hx-target="#techno-{{.ID}}" hx-swap="outerHTML">{{t "commun.archiver"}}</button>
+    {{else}}
+    <button class="bouton-discret bouton-petit"
+            hx-post="/technos/{{.ID}}/reactiver" hx-target="#techno-{{.ID}}" hx-swap="outerHTML">{{t "commun.reactiver"}}</button>
+    {{end}}
+  </td>
+</tr>
+{{end}}
+
+{{define "technos_ligne_edition"}}
+<tr id="techno-{{.ID}}">
+  <td><input type="text" name="code" value="{{.Code}}" required maxlength="40"></td>
+  <td>
+    <input type="text" name="libelle" value="{{.Libelle}}" required maxlength="200">
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td>{{if .Actif}}<span class="badge badge-actif">{{t "commun.actif"}}</span>{{else}}<span class="badge badge-inactif">{{t "commun.archive"}}</span>{{end}}</td>
+  <td class="actions-ligne">
+    <button class="bouton-petit"
+            hx-put="/technos/{{.ID}}" hx-include="closest tr" hx-target="#techno-{{.ID}}" hx-swap="outerHTML">{{t "commun.enregistrer"}}</button>
+    <button type="button" class="bouton-discret bouton-petit"
+            hx-get="/technos/{{.ID}}" hx-target="#techno-{{.ID}}" hx-swap="outerHTML">{{t "commun.annuler"}}</button>
+  </td>
+</tr>
+{{end}}

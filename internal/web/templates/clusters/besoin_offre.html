@@ -1,0 +1,93 @@
+{{define "cluster_besoin_offre_page"}}
+<p><a href="/clusters">← {{t "nav.clusters"}}</a></p>
+<h1>{{t "clusters.besoin_offre.titre"}} — {{.Cluster.Nom}}</h1>
+<p class="sous-titre">
+  {{if .ScenarioID}}
+  {{t "clusters.besoin_offre.sous_titre_scenario"}}
+  {{else}}
+  {{t "clusters.besoin_offre.sous_titre_reel"}}
+  {{end}}
+  {{t "clusters.besoin_offre.date_offre_avant"}} <strong>{{.DateOffre}}</strong> {{t "clusters.besoin_offre.date_offre_apres"}}
+</p>
+
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+
+<form method="get" class="filtres" style="margin-bottom:14px;">
+  <label style="margin:0; display:flex; align-items:center; gap:6px;">
+    {{t "simulation.champ_annee"}}
+    <input type="number" name="annee" value="{{.Annee}}" style="width:90px; margin:0;">
+  </label>
+  <label style="margin:0; display:flex; align-items:center; gap:6px;">
+    {{t "simulation.scenario"}}
+    <select name="scenario">
+      <option value="0" {{if not .ScenarioID}}selected{{end}}>{{t "simulation.reel"}}</option>
+      {{range .Scenarios}}<option value="{{.ID}}" {{if eq .ID $.ScenarioID}}selected{{end}}>{{.Nom}}</option>{{end}}
+    </select>
+  </label>
+  <button type="submit" class="bouton-discret">{{t "simulation.afficher"}}</button>
+  <span style="flex:1"></span>
+  <a class="bouton bouton-discret" href="/clusters/{{.Cluster.ID}}/dimensionnement?annee={{.Annee}}&scenario={{.ScenarioID}}">{{t "clusters.besoin_offre.dimensionner"}} →</a>
+</form>
+
+{{if .ScenarioID}}
+<div class="carte" style="margin-bottom:18px;">
+  <div class="barre-outils" style="margin-bottom:6px;">
+    <h2 style="margin:0">{{t "clusters.besoin_offre.delta_titre"}}</h2>
+    {{template "export_boutons" .ExportDelta}}
+  </div>
+  {{if not .Delta}}
+  <p class="vide">{{t "clusters.besoin_offre.delta_aucun"}}</p>
+  {{else}}
+  <table>
+    <thead><tr><th>{{t "clusters.besoin_offre.mouvement"}}</th><th>{{t "clusters.besoin_offre.serveur"}}</th><th>{{t "simulation.detail"}}</th></tr></thead>
+    <tbody>
+      {{range .Delta}}
+      <tr>
+        <td>{{if eq .Mouvement "ARRIVEE"}}<span class="badge badge-actif">{{t "clusters.besoin_offre.arrivee"}}</span>{{else}}<span class="badge badge-inactif">{{t "clusters.besoin_offre.depart"}}</span>{{end}}</td>
+        <td>{{.PhysicalName}}</td>
+        <td>
+          {{if eq .Mouvement "DEPART"}}
+            {{if .AutreCluster}}{{t "clusters.besoin_offre.deplace_vers"}} {{.AutreCluster}}{{else}}{{t "clusters.besoin_offre.retire_sans_reaffectation"}}{{end}}
+          {{else}}
+            {{t "clusters.besoin_offre.nouveau_sous_scenario"}}
+          {{end}}
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+  {{end}}
+</div>
+{{end}}
+
+{{if not .Lignes}}
+{{if not .Erreur}}<p class="vide">{{t "clusters.besoin_offre.aucune_regle"}}</p>{{end}}
+{{else}}
+{{/* export universel (v3.0) : ?tableau=besoin_offre ; la section contraintes
+     chargée plus bas porte ses propres boutons, vers cette même page */}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .ExportBesoinOffre}}</div>
+<table>
+  <thead><tr>
+    <th>{{t "clusters.besoin_offre.regle"}}</th><th>{{t "clusters.besoin_offre.metrique"}}</th><th>{{t "clusters.besoin_offre.composant"}}</th>
+    <th>{{t "simulation.besoin"}}</th><th>{{t "clusters.besoin_offre.offre"}}</th><th>{{t "clusters.besoin_offre.ecart"}}</th><th></th>
+  </tr></thead>
+  <tbody>
+    {{range .Lignes}}
+    <tr class="{{if .Limitante}}limitante{{end}}">
+      <td>{{.Nom}}</td>
+      <td>{{.Metrique}}</td>
+      <td><code>{{.ComposantOffre}}</code></td>
+      <td>{{formaterNombre .Besoin}}</td>
+      <td>{{formaterNombre .Offre}}</td>
+      <td class="{{if lt .Ecart 0.0}}ecart-negatif{{else}}ecart-positif{{end}}">{{formaterNombre .Ecart}}</td>
+      <td>{{if .Limitante}}<span class="badge badge-inactif" style="background:#fdecea;color:#b3261e;">{{t "clusters.besoin_offre.limitante"}}</span>{{end}}</td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}
+
+<div id="section-contraintes" style="margin-top:18px;"
+     hx-get="/clusters/{{.Cluster.ID}}/contraintes?annee={{.Annee}}&scenario={{.ScenarioID}}"
+     hx-trigger="load" hx-swap="innerHTML"></div>
+{{end}}

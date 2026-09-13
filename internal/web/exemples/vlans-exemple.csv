@@ -1,0 +1,8 @@
+code;projet_code;environnement_code;zone_code;cluster_nom;ip_debut;ip_fin;commentaire
+VL-LOGS-PROD-DC1;LOGS;PROD;DC1;;10.10.1.10;10.10.1.250;Production DC1 — passerelle .1, réservées .2-.9
+VL-LOGS-PROD-DC1;LOGS;PROD;DC1;;10.10.2.10;10.10.2.250;
+VL-LOGS-PROD-DC2;LOGS;PROD;DC2;;10.20.1.10;10.20.1.250;Production DC2
+VL-LOGS-PREPROD;LOGS;PREPROD;;;10.30.1.10;10.30.1.250;Pré-production, toutes zones
+VL-KAFKA-PROD;LOGS;PROD;;Kafka;10.40.1.10;10.40.1.100;Réservé au cluster Kafka de production
+VL-STREAM-PROD;STREAM;PROD;;;10.50.1.10;10.50.1.250;
+VL-ADMIN;;;;;;;Administration — plages à renseigner

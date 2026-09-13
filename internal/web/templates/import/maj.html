@@ -1,0 +1,96 @@
+{{/*
+Mise à jour en masse des serveurs (backlog v3.5) : analyse en diff (jamais
+d'écriture) puis confirmation, dans une transaction unique — voir
+handlers_import_maj.go.
+
+  - "import_maj_page"      page complète : format, export aller-retour, envoi
+  - "import_maj_resultat"  fragment : erreurs / diff à confirmer / écrit
+*/}}
+
+{{define "import_maj_page"}}
+<h1>{{t "import.accueil.maj_titre"}}</h1>
+<p class="sous-titre">
+  {{t "import.maj.sous_titre_1"}} <a href="/import/serveurs">{{t "import.maj.lien_import_creation"}}</a>.
+</p>
+
+<div class="carte" style="margin-bottom:18px">
+  <h2 style="margin-top:0">{{t "import.commun.format_attendu"}}</h2>
+  <p class="sous-titre" style="margin-bottom:10px;">
+    {{t "import.maj.format_csv"}}
+    <strong>{{t "import.maj.colonnes_modifier_titre"}}</strong> : {{t "import.maj.colonnes_modifier_desc1"}}
+    <code>{{.Sentinelle}}</code> {{t "import.maj.colonnes_modifier_desc2"}}
+  </p>
+  <p><strong>{{t "import.maj.cle_titre"}}</strong>, {{t "import.maj.cle_desc1"}} <code>hostname</code> ; {{t "import.commun.sinon"}}
+    <code>demande_ref</code> + <code>demande_serveur_ref</code> ; {{t "import.commun.sinon"}} <code>physical_name</code>. {{t "import.maj.cle_desc2"}}</p>
+  <p><strong>{{t "import.maj.colonnes_reconnues"}}</strong> :
+    {{range $i, $c := .Colonnes}}{{if $i}}, {{end}}<code>{{$c}}</code>{{end}}.</p>
+  <ul style="margin:6px 0 0 18px; padding:0;">
+    <li><code>statut</code> : COMMANDE, EN_SERVICE {{t "import.commun.ou"}} DECOMMISSIONNE {{t "import.maj.statut_desc"}}</li>
+    <li>{{t "import.serveurs.affectation_titre"}} : <code>projet_code</code>, <code>environnement_code</code> {{t "import.commun.et"}} <code>cluster_nom</code> {{t "import.maj.affectation_ensemble"}}
+      <code>date_affectation</code> {{t "import.maj.affectation_parenthese"}}</li>
+    <li>{{t "import.maj.modele_titre"}} : <code>modele_code</code> {{t "import.maj.modele_desc1"}} <code>date_rattachement</code>.</li>
+    <li>{{t "import.maj.unicite"}}</li>
+  </ul>
+  <p style="margin-top:10px;">{{t "import.maj.allerretour_titre"}} : <a href="/serveurs/export-maj">{{t "import.maj.lien_export"}}</a>
+    {{t "import.maj.allerretour_suite"}}</p>
+</div>
+
+<form class="carte" hx-post="/import/serveurs/maj/analyser" hx-encoding="multipart/form-data"
+      hx-target="#resultat-import-maj" hx-swap="innerHTML">
+  <label style="max-width:420px;">{{t "import.commun.fichier_csv"}}
+    <input type="file" name="fichier" accept=".csv" required>
+  </label>
+  <button type="submit">{{t "import.commun.analyser"}}</button>
+</form>
+
+<div id="resultat-import-maj" style="margin-top:18px;"></div>
+{{end}}
+
+{{define "import_maj_resultat"}}
+{{if .MessageJeton}}
+<p class="message-erreur">{{.MessageJeton}}</p>
+{{else if .Erreurs}}
+{{template "import_etapes" "erreurs"}}
+<div class="message-erreur">
+  <p style="margin:0 0 8px;"><strong>{{len .Erreurs}} {{t "import.commun.lignes_erreur_sur"}} {{.NbLignes}}</strong>
+    — {{t "import.commun.aucune_ecriture"}}</p>
+  <ul style="margin:0; padding-left:18px;">
+    {{range .Erreurs}}<li>{{if .Ligne}}{{t "import.commun.ligne"}} {{.Ligne}} : {{end}}{{.Message}}</li>{{end}}
+  </ul>
+</div>
+{{else if .Ecrit}}
+{{template "import_etapes" "ecrit"}}
+<p class="message-succes">
+  {{.NbModifies}} {{t "import.maj.serveurs_maj"}}, {{.NbSansChangement}} {{t "import.maj.sans_changement"}}, {{t "import.commun.sur"}} {{.NbLignes}} {{t "import.commun.ligne_s_point"}}
+  {{t "import.maj.journal_note"}}
+</p>
+{{else}}
+{{template "import_etapes" "pret"}}
+<div class="carte">
+  <p style="margin:0 0 12px;" class="message-succes">
+    {{.NbLignes}} {{t "import.maj.lignes_analysees"}} : {{len .Lignes}} {{t "import.maj.serveurs_a_modifier"}}, {{.NbSansChangement}} {{t "import.maj.sans_changement"}}.
+    {{t "import.commun.rien_ecrit"}}
+  </p>
+  {{if .Lignes}}
+  <table>
+    <thead><tr><th>{{t "import.commun.ligne"}}</th><th>{{t "import.maj.table_serveur"}}</th><th>{{t "import.maj.table_changements"}}</th></tr></thead>
+    <tbody>
+      {{range .Lignes}}
+      <tr>
+        <td>{{.NumeroLigne}}</td>
+        <td>{{.Serveur}}</td>
+        <td>{{range .Changements}}<div>{{.}}</div>{{end}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+  <form hx-post="/import/serveurs/maj/confirmer" hx-target="#resultat-import-maj" hx-swap="innerHTML" style="margin-top:12px;">
+    <input type="hidden" name="jeton" value="{{.Jeton}}">
+    <button type="submit">{{t "import.maj.appliquer"}}</button>
+  </form>
+  {{else}}
+  <p class="vide">{{t "import.maj.aucun_changement"}}</p>
+  {{end}}
+</div>
+{{end}}
+{{end}}

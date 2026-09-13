@@ -1,0 +1,125 @@
+{{/*
+Section « Contraintes de dimensionnement » (v2.2 du backlog) — fragment
+autonome, paramétré par année et par scénario, destiné à être chargé en htmx
+dans l'écran besoin/offre du cluster :
+
+  <div id="section-contraintes"
+       hx-get="/clusters/{id}/contraintes?annee=…&scenario=…"
+       hx-trigger="load" hx-swap="innerHTML"></div>
+
+Cette div (et son id "section-contraintes") est fournie par l'intégration
+dans besoin_offre.html, pas par ce gabarit : "contraintes_section" ci-dessous
+n'en est que le contenu. C'est pour ça que les actions d'écriture ci-dessous
+ciblent "#section-contraintes" en hx-swap="innerHTML" plutôt que de se
+re-swapper elles-mêmes : après toute écriture, la section entière est
+rechargée depuis la base (handlers_contrainte.go, règle n°4 de la tâche),
+jamais une ligne isolée.
+
+Année et scénario voyagent dans la CHAÎNE DE REQUÊTE de chaque hx-post
+(?annee=…&scenario=…), pas en champs cachés du corps : anneeDepuisRequete
+(handlers_dimensionnement.go) ne lit que r.URL.Query(), jamais le corps d'un
+POST — voir le commentaire de tête de routesContraintes. Même patron que le
+bouton Supprimer de valeur_ligne (templates/variables/detail.html).
+
+Contexte Go (handlers_contrainte.go, sectionContraintes) :
+  ClusterID, Annee, ScenarioID (0 = réel)
+  Lignes     []contrainteLigne  — brutes (réel, plus les surcharges du
+                                  scénario choisi), triées par type puis
+                                  réel-avant-scénario (ListerContraintes)
+  Effectives []ligneEffective   — seulement si ScenarioID != 0 : ce qui
+                                  gagne (depot.ContraintesResolues)
+  Erreur     string
+  Types      []typeContrainteInfo — les six types, pour le <select>
+  Export, ExportEffectives — liens d'export (v3.0) des deux tableaux, vers la
+                                  page besoin/offre (?tableau=contraintes,
+                                  ?tableau=contraintes_effectives) : la
+                                  section est un fragment, c'est la page qui
+                                  répond aux exports.
+*/}}
+
+{{define "contraintes_section"}}
+<div class="barre-outils" style="margin-bottom:6px;">
+  <h2 style="margin:0">{{t "clusters.contraintes.titre"}} — {{.Annee}}</h2>
+  {{template "export_boutons" .Export}}
+</div>
+<p class="sous-titre">
+  {{if .ScenarioID}}{{t "clusters.contraintes.sous_titre1"}}{{end}}
+  {{t "clusters.contraintes.sous_titre2"}}
+</p>
+
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+
+<table>
+  <thead><tr>
+    <th>{{t "clusters.contraintes.type"}}</th><th>{{t "clusters.contraintes.valeur_portee"}}</th><th>{{t "simulation.champ_commentaire"}}</th><th></th><th></th>
+  </tr></thead>
+  <tbody>
+    {{range .Lignes}}
+    <tr>
+      <td>{{.Type}}</td>
+      <td>{{if .EstEquilibrage}}{{.PorteeTexte}}{{else}}{{.ValeurTexte}}{{end}}</td>
+      <td>{{videSiNil .Commentaire}}</td>
+      <td>{{if .EstDuScenario}}<span class="badge">{{t "simulation.badge_scenario"}}</span>{{else}}<span class="badge badge-actif">{{t "simulation.badge_reel"}}</span>{{end}}</td>
+      <td class="actions-ligne">
+        {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+        <button class="bouton-discret bouton-petit"
+                hx-post="/clusters/{{$.ClusterID}}/contraintes/{{.ID}}/supprimer?annee={{$.Annee}}&scenario={{$.ScenarioID}}"
+                hx-target="#section-contraintes" hx-swap="innerHTML"
+                hx-confirm="{{t "clusters.contraintes.supprimer_confirmer"}}">{{t "commun.supprimer"}}</button>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="5" class="vide">{{t "clusters.contraintes.aucune"}}{{if .ScenarioID}} {{t "simulation.ou_ce_scenario"}}{{end}}.</td></tr>
+    {{end}}
+  </tbody>
+</table>
+
+{{if .ScenarioID}}
+<div class="carte" style="margin-top:12px">
+<div class="barre-outils" style="margin-bottom:6px;">
+  <h3 style="margin:0">{{t "clusters.contraintes.effectif_titre"}}</h3>
+  {{template "export_boutons" .ExportEffectives}}
+</div>
+{{if not .Effectives}}
+<p class="vide">{{t "clusters.contraintes.effectif_aucun"}}</p>
+{{else}}
+<table>
+  <thead><tr><th>{{t "clusters.contraintes.type"}}</th><th>{{t "simulation.champ_valeur"}}</th></tr></thead>
+  <tbody>
+    {{range .Effectives}}
+    <tr><td>{{.Type}}</td><td>{{.ValeurTexte}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}
+</div>
+{{end}}
+
+<div class="carte" style="margin-top:18px">
+<h3 style="margin-top:0">{{t "clusters.contraintes.definir_titre"}}{{if .ScenarioID}} {{t "simulation.dans_scenario_choisi"}}{{end}}</h3>
+<form hx-post="/clusters/{{.ClusterID}}/contraintes?annee={{.Annee}}&scenario={{.ScenarioID}}"
+      hx-target="#section-contraintes" hx-swap="innerHTML">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:2; min-width:260px; margin:0;">{{t "clusters.contraintes.type"}}
+      <select name="type" required>
+        {{range .Types}}<option value="{{.Code}}" title="{{t (printf "contrainte.aide.%s" .Code)}}">{{.Code}} — {{t (printf "contrainte.aide.%s" .Code)}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:0 0 120px; margin:0;">{{t "simulation.champ_valeur"}}
+      <input type="number" name="valeur" step="any">
+    </label>
+    <label style="flex:0 0 170px; margin:0;">{{t "clusters.contraintes.portee"}}
+      <select name="portee">
+        <option value="">—</option>
+        <option value="NOUVEAUX">{{t "clusters.contraintes.nouveaux_serveurs"}}</option>
+        <option value="TOUS">{{t "clusters.contraintes.ensemble_parc"}}</option>
+      </select>
+    </label>
+    <label style="flex:2; min-width:180px; margin:0;">{{t "simulation.champ_commentaire"}}
+      <input type="text" name="commentaire" maxlength="500">
+    </label>
+    <button type="submit">{{t "commun.enregistrer"}}</button>
+  </div>
+</form>
+</div>
+{{end}}

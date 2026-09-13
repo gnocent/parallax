@@ -1,0 +1,153 @@
+{{/*
+Comparaison de scénarios (v2.4) — côte à côte de deux scénarios A et B, sur
+le même patron que le constructeur de vues (templates/vues/liste.html) :
+axes, colonnes, filtres identiques, réutilisés tels quels côté Go
+(configDepuisRequete). Ce qui change : deux sélecteurs de scénario au lieu
+d'un, et un résultat à trois sous-colonnes par agrégat choisi (A, B, Δ).
+
+  - "comparaison_page"      page complète : constructeur + résultat
+  - "comparaison_resultat"  le tableau de résultat (fragment, réaffiché à
+                              chaque « Générer »), avec ses boutons d'export
+                              et, le cas échéant, la note de non-additivité
+                              des licences GLOBAL ("licences_note_global",
+                              définie dans templates/vues/liste.html)
+
+Un seul <form id="constructeur"> sert deux usages, sans JavaScript propre :
+  - "Générer"             bouton type=button, hx-get vers /comparaison/resultat
+  - "Exporter CSV/Excel"  boutons type=submit avec formaction/formmethod=get
+                          vers /comparaison/resultat.csv ou .xlsx : navigation
+                          native du navigateur, déclenche le téléchargement
+*/}}
+
+{{define "comparaison_page"}}
+<h1>{{t "comparaison.titre"}}</h1>
+<p class="sous-titre">{{t "comparaison.sous_titre"}}</p>
+
+<div class="carte" style="margin-bottom:18px;">
+  <h2 style="margin-top:0">{{t "comparaison.construire_titre"}}</h2>
+  <form id="constructeur">
+    <div style="display:flex; gap:24px; flex-wrap:wrap; margin-bottom:16px;">
+      <div>
+        <strong style="font-size:12px; color:var(--texte-discret)">{{t "simulation.scenario"}} A</strong>
+        <div style="margin-top:6px;">
+          <select name="scenario_a">
+            <option value="0" {{if not .ScenarioAID}}selected{{end}}>{{t "simulation.reel"}}</option>
+            {{range .Scenarios}}<option value="{{.ID}}" {{if eq .ID $.ScenarioAID}}selected{{end}}>{{.Nom}}</option>{{end}}
+          </select>
+        </div>
+      </div>
+      <div>
+        <strong style="font-size:12px; color:var(--texte-discret)">{{t "comparaison.a_la_date_du"}}</strong>
+        <div style="margin-top:6px;">
+          <input type="date" name="date" value="{{.Date}}" required style="margin:0;">
+        </div>
+      </div>
+      <div>
+        <strong style="font-size:12px; color:var(--texte-discret)">{{t "simulation.scenario"}} B</strong>
+        <div style="margin-top:6px;">
+          <select name="scenario_b">
+            <option value="0" {{if not .ScenarioBID}}selected{{end}}>{{t "simulation.reel"}}</option>
+            {{range .Scenarios}}<option value="{{.ID}}" {{if eq .ID $.ScenarioBID}}selected{{end}}>{{.Nom}}</option>{{end}}
+          </select>
+        </div>
+      </div>
+      <div>
+        <strong style="font-size:12px; color:var(--texte-discret)">{{t "comparaison.axes_titre"}}</strong>
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <select name="axe1">
+            <option value="">—</option>
+            {{range .Dimensions}}<option value="{{.Code}}">{{.Libelle}}</option>{{end}}
+          </select>
+          <select name="axe2">
+            <option value="">—</option>
+            {{range .Dimensions}}<option value="{{.Code}}">{{.Libelle}}</option>{{end}}
+          </select>
+          <select name="axe3">
+            <option value="">—</option>
+            {{range .Dimensions}}<option value="{{.Code}}">{{.Libelle}}</option>{{end}}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <strong style="font-size:12px; color:var(--texte-discret)">{{t "comparaison.colonnes_titre"}}</strong>
+      <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:6px;">
+        {{range .Colonnes}}
+        <label style="display:flex; align-items:center; gap:4px; margin:0;">
+          <input type="checkbox" name="colonne" value="{{.Code}}" checked style="width:auto">
+          {{.Libelle}}
+        </label>
+        {{end}}
+      </div>
+    </div>
+
+    <details style="margin-bottom:16px;">
+      <summary style="cursor:pointer; font-size:12px; color:var(--texte-discret)">{{t "comparaison.filtres"}}</summary>
+      <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:10px;">
+        {{range .Dimensions}}
+        <label style="margin:0; min-width:150px;">{{.Libelle}}
+          <select name="filtre_{{.Code}}" multiple size="4">
+            {{range index $.ValeursFiltre .Code}}<option value="{{.}}">{{.}}</option>{{end}}
+          </select>
+        </label>
+        {{end}}
+      </div>
+    </details>
+
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <button type="button" hx-get="/comparaison/resultat" hx-include="#constructeur"
+              hx-target="#resultat" hx-swap="innerHTML">{{t "comparaison.generer"}}</button>
+      <button type="submit" class="bouton-discret" formaction="/comparaison/resultat.csv" formmethod="get">{{t "comparaison.export_csv"}}</button>
+      <button type="submit" class="bouton-discret" formaction="/comparaison/resultat.xlsx" formmethod="get">{{t "comparaison.export_excel"}}</button>
+    </div>
+  </form>
+</div>
+
+<div id="resultat"><p class="vide">{{t "comparaison.generer_placeholder"}}</p></div>
+{{end}}
+
+{{define "comparaison_resultat"}}
+{{/* les boutons d'export du tableau visent les routes dédiées de l'écran
+     (/comparaison/resultat.csv|xlsx) avec la configuration exacte de ce
+     résultat — .Export est construit par comparaisonResultatFragment. */}}
+<div class="barre-outils">
+  <p class="sous-titre" style="margin:0">{{t "comparaison.resultat_a_avant"}} <strong>{{.NomA}}</strong> {{t "comparaison.resultat_b_avant"}} <strong>{{.NomB}}</strong> {{t "comparaison.resultat_delta"}}</p>
+  {{template "export_boutons" .Export}}
+</div>
+<div style="overflow-x:auto;">
+<table>
+  <thead><tr>
+    {{range .LibellesAxes}}<th>{{.}}</th>{{end}}
+    {{range .LibellesColonnes}}<th>{{.}} A</th><th>{{.}} B</th><th>{{.}} Δ</th>{{end}}
+  </tr></thead>
+  <tbody>
+    {{range .Lignes}}
+    <tr>
+      {{range .Cles}}<td>{{if .}}{{.}}{{else}}<span class="vide">—</span>{{end}}</td>{{end}}
+      {{range .Valeurs}}
+      <td>{{formaterNombre .A}}</td>
+      <td>{{formaterNombre .B}}</td>
+      <td class="{{if .NonNul}}{{if lt .Delta 0.0}}ecart-negatif{{else}}ecart-positif{{end}}{{end}}">{{formaterNombre .Delta}}</td>
+      {{end}}
+    </tr>
+    {{else}}
+    <tr><td colspan="12" class="vide">{{t "comparaison.aucune_donnee"}}</td></tr>
+    {{end}}
+  </tbody>
+  {{if .Lignes}}
+  <tfoot>
+    <tr class="ligne-totale">
+      {{range $i, $a := .LibellesAxes}}{{if eq $i 0}}<td><strong>{{t "comparaison.total"}}</strong></td>{{else}}<td></td>{{end}}{{end}}
+      {{range .Total.Valeurs}}
+      <td><strong>{{formaterNombre .A}}</strong></td>
+      <td><strong>{{formaterNombre .B}}</strong></td>
+      <td class="{{if .NonNul}}{{if lt .Delta 0.0}}ecart-negatif{{else}}ecart-positif{{end}}{{end}}"><strong>{{formaterNombre .Delta}}</strong></td>
+      {{end}}
+    </tr>
+  </tfoot>
+  {{end}}
+</table>
+</div>
+{{if .NoteGlobal}}{{template "licences_note_global"}}{{end}}
+{{end}}

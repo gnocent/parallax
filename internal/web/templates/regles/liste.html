@@ -1,0 +1,141 @@
+{{/*
+Écran Règles (v1.5) — liste de toutes les règles, actives et inactives : pas
+de case "inclure les inactives" à filtrer (voir handlers_regle.go), une règle
+désactivée reste un objet de travail courant (dupliquer/évoluer), pas un
+élément archivé à cacher.
+
+Dix champs sont trop pour une ligne de tableau : l'édition complète vit sur la
+page de détail (/regles/{id}, voir templates/regles/detail.html), même
+principe que les modèles. "Détail" est donc un lien classique (<a href>, pas
+htmx). Activer/Désactiver/Dupliquer restent des actions de liste (boutons
+htmx), parce qu'elles ne portent pas sur les dix champs mais sur un seul geste
+que la ligne courante illustre déjà.
+
+Le formulaire de création partage les mêmes six <select> de filtre que
+templates/clusters/liste.html, complétés par Usage et Cluster.
+*/}}
+
+{{define "regles_page"}}
+<h1>{{t "regles.titre"}}</h1>
+<p class="sous-titre">
+  {{t "regles.sous_titre"}}
+</p>
+
+<div class="carte" style="margin-bottom:18px">
+<form hx-post="/regles" hx-target="#tableau-regles" hx-swap="outerHTML">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:2; min-width:180px; margin:0;">{{t "simulation.champ_nom"}}
+      <input type="text" name="nom" required maxlength="200" placeholder="Disque hot 2026">
+    </label>
+    <label style="flex:1; min-width:160px; margin:0;">{{t "regles.metrique"}}
+      <select name="metrique_id" required>
+        <option value="">{{t "regles.choisir"}}</option>
+        {{range .Referentiels.Metriques}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:150px; margin:0;">{{t "regles.niveau"}}
+      <select name="niveau_evaluation" required>
+        <option value="{{$.NiveauPerimetre}}">{{t "regles.niveau_perimetre"}}</option>
+        <option value="{{$.NiveauParServeur}}">{{t "regles.niveau_par_serveur"}}</option>
+      </select>
+    </label>
+    <label style="flex:1; min-width:150px; margin:0;">{{t "regles.composant_offre"}}
+      <input type="text" name="composant_offre" maxlength="80" placeholder="ssd">
+    </label>
+  </div>
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-top:10px;">
+    <label style="flex:3; min-width:260px; margin:0;">{{t "regles.expression"}}
+      <input type="text" name="expression" required maxlength="1000"
+             placeholder="ceil(ssd_total * coef_formatage * taux_remplissage_max)">
+    </label>
+    <label style="flex:2; min-width:200px; margin:0;">{{t "simulation.champ_commentaire"}}
+      <input type="text" name="commentaire" maxlength="500">
+    </label>
+  </div>
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-top:10px;">
+    <label style="flex:1; min-width:140px; margin:0;">{{t "simulation.champ_projet"}}
+      <select name="projet_id">
+        <option value="">—</option>
+        {{range .Referentiels.Projets}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:150px; margin:0;">{{t "simulation.champ_environnement"}}
+      <select name="environnement_id">
+        <option value="">—</option>
+        {{range .Referentiels.Environnements}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:140px; margin:0;">{{t "simulation.champ_techno"}}
+      <select name="techno_id">
+        <option value="">—</option>
+        {{range .Referentiels.Technos}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:120px; margin:0;">{{t "simulation.champ_tier"}}
+      <select name="tier_id">
+        <option value="">—</option>
+        {{range .Referentiels.Tiers}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:140px; margin:0;">{{t "simulation.champ_usage"}}
+      <select name="usage_id">
+        <option value="">—</option>
+        {{range .Referentiels.Usages}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:150px; margin:0;">{{t "simulation.champ_cluster"}}
+      <select name="cluster_id">
+        <option value="">—</option>
+        {{range .Referentiels.Clusters}}<option value="{{.ID}}">{{.Nom}}</option>{{end}}
+      </select>
+    </label>
+    <button type="submit">{{t "commun.ajouter"}}</button>
+  </div>
+</form>
+</div>
+
+{{template "regles_tableau" .}}
+{{end}}
+
+{{define "regles_tableau"}}
+<div id="tableau-regles">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr>
+    <th>{{t "simulation.champ_nom"}}</th><th>{{t "regles.metrique"}}</th><th>{{t "regles.expression"}}</th><th>{{t "regles.niveau"}}</th><th>{{t "regles.filtre"}}</th><th>{{t "regles.actif_entete"}}</th><th></th>
+  </tr></thead>
+  <tbody>
+    {{range .Regles}}{{template "regles_ligne" .}}{{else}}
+    <tr><td colspan="7" class="vide">{{t "regles.aucun"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "regles_ligne"}}
+<tr id="regle-{{.ID}}" class="{{if not .Actif}}inactif{{end}}">
+  <td>
+    <a href="/regles/{{.ID}}">{{.Nom}}</a>
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td>{{.MetriqueLibelle}}</td>
+  <td><code>{{.Expression}}</code></td>
+  <td>{{.NiveauLibelle}}</td>
+  <td>{{.FiltreResume}}</td>
+  <td>{{if .Actif}}<span class="badge badge-actif">{{t "commun.actif"}}</span>{{else}}<span class="badge badge-inactif">{{t "regles.badge_inactif"}}</span>{{end}}</td>
+  <td class="actions-ligne">
+    <a class="bouton-discret bouton-petit" href="/regles/{{.ID}}">{{t "simulation.detail"}}</a>
+    {{if .Actif}}
+    <button class="bouton-discret bouton-petit"
+            hx-post="/regles/{{.ID}}/desactiver" hx-target="#regle-{{.ID}}" hx-swap="outerHTML">{{t "regles.desactiver"}}</button>
+    {{else}}
+    <button class="bouton-discret bouton-petit"
+            hx-post="/regles/{{.ID}}/activer" hx-target="#regle-{{.ID}}" hx-swap="outerHTML">{{t "regles.activer"}}</button>
+    {{end}}
+    <button class="bouton-discret bouton-petit"
+            hx-post="/regles/{{.ID}}/dupliquer" hx-target="#tableau-regles" hx-swap="outerHTML">{{t "regles.dupliquer"}}</button>
+  </td>
+</tr>
+{{end}}

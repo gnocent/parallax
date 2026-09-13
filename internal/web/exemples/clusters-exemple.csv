@@ -1,0 +1,7 @@
+nom;projet_code;environnement_code;techno_code;tier_code;usage_code;commentaire
+ElasticHot;LOGS;PROD;ELASTIC;HOT;SEARCH;Indexation temps réel
+ElasticCold1;LOGS;PROD;ELASTIC;COLD;SEARCH;Rétention longue
+Kafka;LOGS;PROD;KAFKA;;INGEST;File d'attente du pipeline
+Nomad;LOGS;PROD;NOMAD;;BATCH;Préparation de données
+ElasticHot;LOGS;PREPROD;ELASTIC;HOT;SEARCH;
+Kafka;STREAM;PROD;KAFKA;;INGEST;

@@ -1,0 +1,72 @@
+{{/*
+Écran « serveurs sans affectation active » (v1.3) : liste des
+candidats naturels à la réutilisation, triée par fin de lease croissante
+(fait par ListerServeursSansAffectationActive — pas de tri côté gabarit).
+
+Décision de conception pour l'action rapide « Affecter » : en cas de succès,
+le serveur affecté n'a plus sa place dans cette liste — le serveur renvoie un
+corps VIDE, et hx-swap="outerHTML" sur la ligne la fait disparaître sans
+recharger la page. En cas d'échec métier (date invalide, cluster inexistant,
+concurrence avec une autre affectation), la ligne se réaffiche avec un
+message d'erreur inline, le mini-formulaire reste utilisable pour corriger et
+réessayer. Revers assumé : si toutes les lignes disparaissent une à une par
+ce mécanisme, le message "Tous les serveurs ont une affectation active."
+n'apparaît qu'au prochain chargement complet de la page (la ligne "vide" du
+tableau n'est réinjectée que par serveursSansAffectationPage, pas par
+l'action rapide) — jugé acceptable pour un écran d'appoint.
+
+Pas de <form> imbriqué dans le <tr> du mini-formulaire (invalide en HTML) :
+le bouton Affecter porte hx-include="closest tr" pour ramasser le select et
+la date de la ligne, comme les lignes d'édition de projets/liste.html.
+*/}}
+
+{{define "serveurs_sans_affectation_page"}}
+<h1>{{t "serveurs.sans_affectation_titre"}}</h1>
+<p class="sous-titre">
+  {{t "serveurs.sans_affectation_sous_titre"}}
+  {{if .ScenarioID}}{{t "serveurs.sans_affectation_note_scenario"}}{{end}}
+</p>
+
+<form method="get" class="filtres" style="margin-bottom:14px;">
+  <label style="margin:0; display:flex; align-items:center; gap:6px;">
+    {{t "serveurs.champ_scenario"}}
+    <select name="scenario" onchange="this.form.submit()">
+      <option value="0" {{if not .ScenarioID}}selected{{end}}>{{t "serveurs.option_reel"}}</option>
+      {{range .Scenarios}}<option value="{{.ID}}" {{if eq .ID $.ScenarioID}}selected{{end}}>{{.Nom}}</option>{{end}}
+    </select>
+  </label>
+  {{template "export_boutons" .Export}}
+</form>
+
+<table>
+  <thead><tr><th>{{t "serveurs.champ_serveur"}}</th><th>{{t "serveurs.champ_zone"}}</th><th>{{t "serveurs.champ_fin_lease"}}</th><th>{{t "serveurs.action_affecter"}}</th></tr></thead>
+  <tbody id="tableau-sans-affectation">
+    {{range .Lignes}}{{template "serveurs_sans_affectation_ligne" .}}{{else}}
+    <tr><td colspan="4" class="vide">{{t "serveurs.sans_affectation_aucun"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}
+
+{{define "serveurs_sans_affectation_ligne"}}
+<tr id="sans-affectation-{{.Serveur.ID}}">
+  <td>
+    <a href="/serveurs/{{.Serveur.ID}}">{{if .Serveur.PhysicalName}}{{videSiNil .Serveur.PhysicalName}}{{else}}#{{.Serveur.ID}}{{end}}</a>
+    {{if .Serveur.Hostname}} — {{videSiNil .Serveur.Hostname}}{{end}}
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td>{{if .ZoneLibelle}}{{.ZoneLibelle}}{{else}}—{{end}}</td>
+  <td>{{if .FinLease}}{{videSiNil .FinLease}}{{else}}—{{end}}</td>
+  <td class="actions-ligne">
+    <select name="cluster_id" required>
+      <option value="">{{t "serveurs.choisir"}}</option>
+      {{range .Clusters}}<option value="{{.ID}}">{{.Nom}}</option>{{end}}
+    </select>
+    <input type="date" name="date_debut" required>
+    <input type="hidden" name="scenario" value="{{.ScenarioID}}">
+    <button class="bouton-petit"
+            hx-post="/serveurs/sans-affectation/{{.Serveur.ID}}/affecter"
+            hx-include="closest tr" hx-target="#sans-affectation-{{.Serveur.ID}}" hx-swap="outerHTML">{{t "serveurs.action_affecter"}}</button>
+  </td>
+</tr>
+{{end}}

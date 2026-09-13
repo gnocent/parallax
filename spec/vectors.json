@@ -1,0 +1,2874 @@
+{
+  "conflits": [
+    {
+      "attendu": [],
+      "clusters": [
+        {
+          "environnement_id": 1,
+          "id": 1,
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1,
+          "usage_fonctionnel_id": 1
+        },
+        {
+          "environnement_id": 1,
+          "id": 2,
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2,
+          "usage_fonctionnel_id": 1
+        },
+        {
+          "environnement_id": 1,
+          "id": 3,
+          "projet_id": 1,
+          "techno_id": 2,
+          "tier_id": null,
+          "usage_fonctionnel_id": 1
+        }
+      ],
+      "libelle": "règles HOT et COLD disjointes",
+      "regles": [
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 1,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic HOT",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1
+        },
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 2,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic COLD",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2
+        },
+        {
+          "actif": true,
+          "composant_offre": "cpu",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * 1.5",
+          "id": 3,
+          "metrique": "CPU_CORES",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "CPU Elastic",
+          "projet_id": 1,
+          "techno_id": 1
+        }
+      ]
+    },
+    {
+      "attendu": [
+        {
+          "clusters": [
+            1
+          ],
+          "regle_a": 1,
+          "regle_b": 99
+        },
+        {
+          "clusters": [
+            2
+          ],
+          "regle_a": 2,
+          "regle_b": 99
+        }
+      ],
+      "clusters": [
+        {
+          "environnement_id": 1,
+          "id": 1,
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1,
+          "usage_fonctionnel_id": 1
+        },
+        {
+          "environnement_id": 1,
+          "id": 2,
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2,
+          "usage_fonctionnel_id": 1
+        },
+        {
+          "environnement_id": 1,
+          "id": 3,
+          "projet_id": 1,
+          "techno_id": 2,
+          "tier_id": null,
+          "usage_fonctionnel_id": 1
+        }
+      ],
+      "libelle": "règle générique recouvrante",
+      "regles": [
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 1,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic HOT",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1
+        },
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 2,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic COLD",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2
+        },
+        {
+          "actif": true,
+          "composant_offre": "cpu",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * 1.5",
+          "id": 3,
+          "metrique": "CPU_CORES",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "CPU Elastic",
+          "projet_id": 1,
+          "techno_id": 1
+        },
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to",
+          "id": 99,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic generique",
+          "projet_id": 1,
+          "techno_id": 1
+        }
+      ]
+    },
+    {
+      "attendu": [],
+      "clusters": [
+        {
+          "environnement_id": 1,
+          "id": 1,
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1,
+          "usage_fonctionnel_id": 1
+        },
+        {
+          "environnement_id": 1,
+          "id": 2,
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2,
+          "usage_fonctionnel_id": 1
+        },
+        {
+          "environnement_id": 1,
+          "id": 3,
+          "projet_id": 1,
+          "techno_id": 2,
+          "tier_id": null,
+          "usage_fonctionnel_id": 1
+        }
+      ],
+      "libelle": "règle recouvrante mais désactivée",
+      "regles": [
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 1,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic HOT",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1
+        },
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 2,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic COLD",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2
+        },
+        {
+          "actif": true,
+          "composant_offre": "cpu",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * 1.5",
+          "id": 3,
+          "metrique": "CPU_CORES",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "CPU Elastic",
+          "projet_id": 1,
+          "techno_id": 1
+        },
+        {
+          "actif": false,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to",
+          "id": 99,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic generique",
+          "projet_id": 1,
+          "techno_id": 1
+        }
+      ]
+    }
+  ],
+  "contraintes": [
+    {
+      "attendu": {
+        "nb_serveurs": 13,
+        "nb_zones": null,
+        "par_zone": null
+      },
+      "contraintes": {},
+      "libelle": "aucune contrainte, arrondi supérieur",
+      "nb_brut": 12.2
+    },
+    {
+      "attendu": {
+        "nb_serveurs": 12,
+        "nb_zones": null,
+        "par_zone": null
+      },
+      "contraintes": {},
+      "libelle": "valeur déjà entière",
+      "nb_brut": 12.0
+    },
+    {
+      "attendu": {
+        "nb_serveurs": 6,
+        "nb_zones": null,
+        "par_zone": null
+      },
+      "contraintes": {
+        "MIN_TOTAL": 6
+      },
+      "libelle": "minimum total",
+      "nb_brut": 3.1
+    },
+    {
+      "attendu": {
+        "nb_serveurs": 15,
+        "nb_zones": null,
+        "par_zone": null
+      },
+      "contraintes": {
+        "MULTIPLE_TOTAL": 3
+      },
+      "libelle": "multiple total",
+      "nb_brut": 12.2
+    },
+    {
+      "attendu": {
+        "nb_serveurs": 12,
+        "nb_zones": null,
+        "par_zone": null
+      },
+      "contraintes": {
+        "MULTIPLE_TOTAL": 3
+      },
+      "libelle": "multiple total déjà satisfait",
+      "nb_brut": 12.0
+    },
+    {
+      "attendu": {
+        "nb_serveurs": 12,
+        "nb_zones": 3,
+        "par_zone": 4
+      },
+      "contraintes": {
+        "EQUILIBRAGE_ZONE": 1,
+        "NB_ZONES": 3
+      },
+      "libelle": "équilibrage sur 3 zones",
+      "nb_brut": 10.0
+    },
+    {
+      "attendu": {
+        "nb_serveurs": 10,
+        "nb_zones": 2,
+        "par_zone": 5
+      },
+      "contraintes": {
+        "EQUILIBRAGE_ZONE": 1,
+        "NB_ZONES": 2
+      },
+      "libelle": "équilibrage sur 2 zones",
+      "nb_brut": 9.0
+    },
+    {
+      "attendu": {
+        "nb_serveurs": 9,
+        "nb_zones": 3,
+        "par_zone": 3
+      },
+      "contraintes": {
+        "MIN_PAR_ZONE": 3,
+        "NB_ZONES": 3
+      },
+      "libelle": "minimum par zone",
+      "nb_brut": 4.0
+    },
+    {
+      "attendu": {
+        "nb_serveurs": 12,
+        "nb_zones": 2,
+        "par_zone": 6
+      },
+      "contraintes": {
+        "MULTIPLE_PAR_ZONE": 3,
+        "NB_ZONES": 2
+      },
+      "libelle": "multiple par zone",
+      "nb_brut": 10.0
+    },
+    {
+      "attendu": {
+        "nb_serveurs": 12,
+        "nb_zones": 3,
+        "par_zone": 4
+      },
+      "contraintes": {
+        "EQUILIBRAGE_ZONE": 1,
+        "MULTIPLE_TOTAL": 4,
+        "NB_ZONES": 3
+      },
+      "libelle": "total et par zone combinés",
+      "nb_brut": 10.0
+    },
+    {
+      "attendu": {
+        "nb_serveurs": 12,
+        "nb_zones": 3,
+        "par_zone": 4
+      },
+      "contraintes": {
+        "MIN_PAR_ZONE": 2,
+        "MULTIPLE_PAR_ZONE": 2,
+        "NB_ZONES": 3
+      },
+      "libelle": "stretched 2 vers 3 zones",
+      "nb_brut": 12.0
+    },
+    {
+      "attendu": {
+        "nb_serveurs": 10,
+        "nb_zones": 3,
+        "par_zone": null
+      },
+      "contraintes": {
+        "NB_ZONES": 3
+      },
+      "libelle": "nb_zones sans contrainte par zone ne force rien",
+      "nb_brut": 10.0
+    }
+  ],
+  "dimensionnement": [
+    {
+      "annee": 2027,
+      "attendu": {
+        "cout_acquisition": 84000.0,
+        "cout_annuel": 19600.0,
+        "details": [
+          {
+            "besoin": 318.5,
+            "besoin_residuel": 318.5,
+            "capacite_unitaire": 362.87999999999994,
+            "metrique": "DISQUE_UTILE_TO",
+            "nb_brut": 0.877701,
+            "nom": "Disque Elastic HOT",
+            "regle_id": 1
+          },
+          {
+            "besoin": 97.5,
+            "besoin_residuel": 97.5,
+            "capacite_unitaire": 64.0,
+            "metrique": "CPU_CORES",
+            "nb_brut": 1.523438,
+            "nom": "CPU Elastic",
+            "regle_id": 3
+          }
+        ],
+        "nb_serveurs": 2,
+        "nb_zones": null,
+        "par_zone": null,
+        "regle_limitante": 3
+      },
+      "cluster": {
+        "environnement_id": 1,
+        "id": 1,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 1,
+        "usage_fonctionnel_id": 1
+      },
+      "contraintes": {},
+      "defauts": {
+        "coef_formatage": 0.9,
+        "ram_max_licence": 64.0,
+        "taux_remplissage_max": 0.7
+      },
+      "libelle": "HOT 2027 réel, DENSE, sans contrainte",
+      "modele": {
+        "code": "DENSE-2025",
+        "composants": {
+          "cpu": 64.0,
+          "ram": 1024.0,
+          "ssd": 362.87999999999994
+        },
+        "cout_annuel_ht": 9800.0,
+        "prix_fournisseur_ht": 42000.0
+      },
+      "offre_conservee": {},
+      "regles": [
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 1,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic HOT",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1
+        },
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 2,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic COLD",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2
+        },
+        {
+          "actif": true,
+          "composant_offre": "cpu",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * 1.5",
+          "id": 3,
+          "metrique": "CPU_CORES",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "CPU Elastic",
+          "projet_id": 1,
+          "techno_id": 1
+        }
+      ],
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": {
+        "cout_acquisition": 168000.0,
+        "cout_annuel": 39200.0,
+        "details": [
+          {
+            "besoin": 735.0,
+            "besoin_residuel": 735.0,
+            "capacite_unitaire": 362.87999999999994,
+            "metrique": "DISQUE_UTILE_TO",
+            "nb_brut": 2.025463,
+            "nom": "Disque Elastic HOT",
+            "regle_id": 1
+          },
+          {
+            "besoin": 225.0,
+            "besoin_residuel": 225.0,
+            "capacite_unitaire": 64.0,
+            "metrique": "CPU_CORES",
+            "nb_brut": 3.515625,
+            "nom": "CPU Elastic",
+            "regle_id": 3
+          }
+        ],
+        "nb_serveurs": 4,
+        "nb_zones": null,
+        "par_zone": null,
+        "regle_limitante": 3
+      },
+      "cluster": {
+        "environnement_id": 1,
+        "id": 1,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 1,
+        "usage_fonctionnel_id": 1
+      },
+      "contraintes": {},
+      "defauts": {
+        "coef_formatage": 0.9,
+        "ram_max_licence": 64.0,
+        "taux_remplissage_max": 0.7
+      },
+      "libelle": "HOT 2027 sous scénario (débit 150)",
+      "modele": {
+        "code": "DENSE-2025",
+        "composants": {
+          "cpu": 64.0,
+          "ram": 1024.0,
+          "ssd": 362.87999999999994
+        },
+        "cout_annuel_ht": 9800.0,
+        "prix_fournisseur_ht": 42000.0
+      },
+      "offre_conservee": {},
+      "regles": [
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 1,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic HOT",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1
+        },
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 2,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic COLD",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2
+        },
+        {
+          "actif": true,
+          "composant_offre": "cpu",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * 1.5",
+          "id": 3,
+          "metrique": "CPU_CORES",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "CPU Elastic",
+          "projet_id": 1,
+          "techno_id": 1
+        }
+      ],
+      "scenario_id": 1,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": {
+        "cout_acquisition": 252000.0,
+        "cout_annuel": 58800.0,
+        "details": [
+          {
+            "besoin": 735.0,
+            "besoin_residuel": 735.0,
+            "capacite_unitaire": 362.87999999999994,
+            "metrique": "DISQUE_UTILE_TO",
+            "nb_brut": 2.025463,
+            "nom": "Disque Elastic HOT",
+            "regle_id": 1
+          },
+          {
+            "besoin": 225.0,
+            "besoin_residuel": 225.0,
+            "capacite_unitaire": 64.0,
+            "metrique": "CPU_CORES",
+            "nb_brut": 3.515625,
+            "nom": "CPU Elastic",
+            "regle_id": 3
+          }
+        ],
+        "nb_serveurs": 6,
+        "nb_zones": 3,
+        "par_zone": 2,
+        "regle_limitante": 3
+      },
+      "cluster": {
+        "environnement_id": 1,
+        "id": 1,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 1,
+        "usage_fonctionnel_id": 1
+      },
+      "contraintes": {
+        "EQUILIBRAGE_ZONE": 1,
+        "NB_ZONES": 3
+      },
+      "defauts": {
+        "coef_formatage": 0.9,
+        "ram_max_licence": 64.0,
+        "taux_remplissage_max": 0.7
+      },
+      "libelle": "HOT 2027 scénario avec équilibrage 3 zones",
+      "modele": {
+        "code": "DENSE-2025",
+        "composants": {
+          "cpu": 64.0,
+          "ram": 1024.0,
+          "ssd": 362.87999999999994
+        },
+        "cout_annuel_ht": 9800.0,
+        "prix_fournisseur_ht": 42000.0
+      },
+      "offre_conservee": {},
+      "regles": [
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 1,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic HOT",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1
+        },
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 2,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic COLD",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2
+        },
+        {
+          "actif": true,
+          "composant_offre": "cpu",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * 1.5",
+          "id": 3,
+          "metrique": "CPU_CORES",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "CPU Elastic",
+          "projet_id": 1,
+          "techno_id": 1
+        }
+      ],
+      "scenario_id": 1,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": {
+        "cout_acquisition": 217000.0,
+        "cout_annuel": 50400.0,
+        "details": [
+          {
+            "besoin": 735.0,
+            "besoin_residuel": 735.0,
+            "capacite_unitaire": 120.96,
+            "metrique": "DISQUE_UTILE_TO",
+            "nb_brut": 6.076389,
+            "nom": "Disque Elastic HOT",
+            "regle_id": 1
+          },
+          {
+            "besoin": 225.0,
+            "besoin_residuel": 225.0,
+            "capacite_unitaire": 96.0,
+            "metrique": "CPU_CORES",
+            "nb_brut": 2.34375,
+            "nom": "CPU Elastic",
+            "regle_id": 3
+          }
+        ],
+        "nb_serveurs": 7,
+        "nb_zones": null,
+        "par_zone": null,
+        "regle_limitante": 1
+      },
+      "cluster": {
+        "environnement_id": 1,
+        "id": 1,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 1,
+        "usage_fonctionnel_id": 1
+      },
+      "contraintes": {},
+      "defauts": {
+        "coef_formatage": 0.9,
+        "ram_max_licence": 64.0,
+        "taux_remplissage_max": 0.7
+      },
+      "libelle": "HOT 2027 scénario, modèle alternatif MID",
+      "modele": {
+        "code": "MID-2025",
+        "composants": {
+          "cpu": 96.0,
+          "ram": 768.0,
+          "ssd": 120.96
+        },
+        "cout_annuel_ht": 7200.0,
+        "prix_fournisseur_ht": 31000.0
+      },
+      "offre_conservee": {},
+      "regles": [
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 1,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic HOT",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1
+        },
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 2,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic COLD",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2
+        },
+        {
+          "actif": true,
+          "composant_offre": "cpu",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * 1.5",
+          "id": 3,
+          "metrique": "CPU_CORES",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "CPU Elastic",
+          "projet_id": 1,
+          "techno_id": 1
+        }
+      ],
+      "scenario_id": 1,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": {
+        "cout_acquisition": 378000.0,
+        "cout_annuel": 88200.0,
+        "details": [
+          {
+            "besoin": 2925.0,
+            "besoin_residuel": 2925.0,
+            "capacite_unitaire": 362.87999999999994,
+            "metrique": "DISQUE_UTILE_TO",
+            "nb_brut": 8.060516,
+            "nom": "Disque Elastic COLD",
+            "regle_id": 2
+          },
+          {
+            "besoin": 97.5,
+            "besoin_residuel": 97.5,
+            "capacite_unitaire": 64.0,
+            "metrique": "CPU_CORES",
+            "nb_brut": 1.523438,
+            "nom": "CPU Elastic",
+            "regle_id": 3
+          }
+        ],
+        "nb_serveurs": 9,
+        "nb_zones": null,
+        "par_zone": null,
+        "regle_limitante": 2
+      },
+      "cluster": {
+        "environnement_id": 1,
+        "id": 2,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 2,
+        "usage_fonctionnel_id": 1
+      },
+      "contraintes": {},
+      "defauts": {
+        "coef_formatage": 0.9,
+        "ram_max_licence": 64.0,
+        "taux_remplissage_max": 0.7
+      },
+      "libelle": "COLD 2027 réel, compression surchargée",
+      "modele": {
+        "code": "DENSE-2025",
+        "composants": {
+          "cpu": 64.0,
+          "ram": 1024.0,
+          "ssd": 362.87999999999994
+        },
+        "cout_annuel_ht": 9800.0,
+        "prix_fournisseur_ht": 42000.0
+      },
+      "offre_conservee": {},
+      "regles": [
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 1,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic HOT",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1
+        },
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 2,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic COLD",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2
+        },
+        {
+          "actif": true,
+          "composant_offre": "cpu",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * 1.5",
+          "id": 3,
+          "metrique": "CPU_CORES",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "CPU Elastic",
+          "projet_id": 1,
+          "techno_id": 1
+        }
+      ],
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": {
+        "cout_acquisition": 420000.0,
+        "cout_annuel": 98000.0,
+        "details": [
+          {
+            "besoin": 2925.0,
+            "besoin_residuel": 2925.0,
+            "capacite_unitaire": 362.87999999999994,
+            "metrique": "DISQUE_UTILE_TO",
+            "nb_brut": 8.060516,
+            "nom": "Disque Elastic COLD",
+            "regle_id": 2
+          },
+          {
+            "besoin": 97.5,
+            "besoin_residuel": 97.5,
+            "capacite_unitaire": 64.0,
+            "metrique": "CPU_CORES",
+            "nb_brut": 1.523438,
+            "nom": "CPU Elastic",
+            "regle_id": 3
+          }
+        ],
+        "nb_serveurs": 10,
+        "nb_zones": 2,
+        "par_zone": 5,
+        "regle_limitante": 2
+      },
+      "cluster": {
+        "environnement_id": 1,
+        "id": 2,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 2,
+        "usage_fonctionnel_id": 1
+      },
+      "contraintes": {
+        "MIN_PAR_ZONE": 4,
+        "NB_ZONES": 2
+      },
+      "defauts": {
+        "coef_formatage": 0.9,
+        "ram_max_licence": 64.0,
+        "taux_remplissage_max": 0.7
+      },
+      "libelle": "COLD 2027 avec minimum par zone",
+      "modele": {
+        "code": "DENSE-2025",
+        "composants": {
+          "cpu": 64.0,
+          "ram": 1024.0,
+          "ssd": 362.87999999999994
+        },
+        "cout_annuel_ht": 9800.0,
+        "prix_fournisseur_ht": 42000.0
+      },
+      "offre_conservee": {},
+      "regles": [
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 1,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic HOT",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1
+        },
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 2,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic COLD",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2
+        },
+        {
+          "actif": true,
+          "composant_offre": "cpu",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * 1.5",
+          "id": 3,
+          "metrique": "CPU_CORES",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "CPU Elastic",
+          "projet_id": 1,
+          "techno_id": 1
+        }
+      ],
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": {
+        "cout_acquisition": 0.0,
+        "cout_annuel": 0.0,
+        "details": [],
+        "nb_serveurs": 0,
+        "nb_zones": null,
+        "par_zone": null,
+        "regle_limitante": null
+      },
+      "cluster": {
+        "environnement_id": 1,
+        "id": 3,
+        "projet_id": 1,
+        "techno_id": 2,
+        "tier_id": null,
+        "usage_fonctionnel_id": 1
+      },
+      "contraintes": {},
+      "defauts": {
+        "coef_formatage": 0.9,
+        "ram_max_licence": 64.0,
+        "taux_remplissage_max": 0.7
+      },
+      "libelle": "Kafka : aucune règle applicable",
+      "modele": {
+        "code": "DENSE-2025",
+        "composants": {
+          "cpu": 64.0,
+          "ram": 1024.0,
+          "ssd": 362.87999999999994
+        },
+        "cout_annuel_ht": 9800.0,
+        "prix_fournisseur_ht": 42000.0
+      },
+      "offre_conservee": {},
+      "regles": [
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 1,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic HOT",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1
+        },
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 2,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic COLD",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2
+        },
+        {
+          "actif": true,
+          "composant_offre": "cpu",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * 1.5",
+          "id": 3,
+          "metrique": "CPU_CORES",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "CPU Elastic",
+          "projet_id": 1,
+          "techno_id": 1
+        }
+      ],
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": {
+        "cout_acquisition": 84000.0,
+        "cout_annuel": 19600.0,
+        "details": [
+          {
+            "besoin": 318.5,
+            "besoin_residuel": 0.0,
+            "capacite_unitaire": 362.87999999999994,
+            "metrique": "DISQUE_UTILE_TO",
+            "nb_brut": 0.0,
+            "nom": "Disque Elastic HOT",
+            "regle_id": 1
+          },
+          {
+            "besoin": 97.5,
+            "besoin_residuel": 97.5,
+            "capacite_unitaire": 64.0,
+            "metrique": "CPU_CORES",
+            "nb_brut": 1.523438,
+            "nom": "CPU Elastic",
+            "regle_id": 3
+          }
+        ],
+        "nb_serveurs": 2,
+        "nb_zones": null,
+        "par_zone": null,
+        "regle_limitante": 3
+      },
+      "cluster": {
+        "environnement_id": 1,
+        "id": 1,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 1,
+        "usage_fonctionnel_id": 1
+      },
+      "contraintes": {},
+      "defauts": {
+        "coef_formatage": 0.9,
+        "ram_max_licence": 64.0,
+        "taux_remplissage_max": 0.7
+      },
+      "libelle": "HOT 2027 réel, renfort : 400 To de disque conservés",
+      "modele": {
+        "code": "DENSE-2025",
+        "composants": {
+          "cpu": 64.0,
+          "ram": 1024.0,
+          "ssd": 362.87999999999994
+        },
+        "cout_annuel_ht": 9800.0,
+        "prix_fournisseur_ht": 42000.0
+      },
+      "offre_conservee": {
+        "ssd": 400
+      },
+      "regles": [
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 1,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic HOT",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1
+        },
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 2,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic COLD",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2
+        },
+        {
+          "actif": true,
+          "composant_offre": "cpu",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * 1.5",
+          "id": 3,
+          "metrique": "CPU_CORES",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "CPU Elastic",
+          "projet_id": 1,
+          "techno_id": 1
+        }
+      ],
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": {
+        "cout_acquisition": 0.0,
+        "cout_annuel": 0.0,
+        "details": [
+          {
+            "besoin": 318.5,
+            "besoin_residuel": 0.0,
+            "capacite_unitaire": 362.87999999999994,
+            "metrique": "DISQUE_UTILE_TO",
+            "nb_brut": 0.0,
+            "nom": "Disque Elastic HOT",
+            "regle_id": 1
+          },
+          {
+            "besoin": 97.5,
+            "besoin_residuel": 0.0,
+            "capacite_unitaire": 64.0,
+            "metrique": "CPU_CORES",
+            "nb_brut": 0.0,
+            "nom": "CPU Elastic",
+            "regle_id": 3
+          }
+        ],
+        "nb_serveurs": 0,
+        "nb_zones": null,
+        "par_zone": null,
+        "regle_limitante": 1
+      },
+      "cluster": {
+        "environnement_id": 1,
+        "id": 1,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 1,
+        "usage_fonctionnel_id": 1
+      },
+      "contraintes": {},
+      "defauts": {
+        "coef_formatage": 0.9,
+        "ram_max_licence": 64.0,
+        "taux_remplissage_max": 0.7
+      },
+      "libelle": "HOT 2027 réel, renfort partiel sur les deux composants",
+      "modele": {
+        "code": "DENSE-2025",
+        "composants": {
+          "cpu": 64.0,
+          "ram": 1024.0,
+          "ssd": 362.87999999999994
+        },
+        "cout_annuel_ht": 9800.0,
+        "prix_fournisseur_ht": 42000.0
+      },
+      "offre_conservee": {
+        "cpu": 100,
+        "ssd": 400
+      },
+      "regles": [
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 1,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic HOT",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1
+        },
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 2,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic COLD",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2
+        },
+        {
+          "actif": true,
+          "composant_offre": "cpu",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * 1.5",
+          "id": 3,
+          "metrique": "CPU_CORES",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "CPU Elastic",
+          "projet_id": 1,
+          "techno_id": 1
+        }
+      ],
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": {
+        "cout_acquisition": 0.0,
+        "cout_annuel": 0.0,
+        "details": [
+          {
+            "besoin": 318.5,
+            "besoin_residuel": 0.0,
+            "capacite_unitaire": 362.87999999999994,
+            "metrique": "DISQUE_UTILE_TO",
+            "nb_brut": 0.0,
+            "nom": "Disque Elastic HOT",
+            "regle_id": 1
+          },
+          {
+            "besoin": 97.5,
+            "besoin_residuel": 0.0,
+            "capacite_unitaire": 64.0,
+            "metrique": "CPU_CORES",
+            "nb_brut": 0.0,
+            "nom": "CPU Elastic",
+            "regle_id": 3
+          }
+        ],
+        "nb_serveurs": 0,
+        "nb_zones": null,
+        "par_zone": null,
+        "regle_limitante": 1
+      },
+      "cluster": {
+        "environnement_id": 1,
+        "id": 1,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 1,
+        "usage_fonctionnel_id": 1
+      },
+      "contraintes": {},
+      "defauts": {
+        "coef_formatage": 0.9,
+        "ram_max_licence": 64.0,
+        "taux_remplissage_max": 0.7
+      },
+      "libelle": "HOT 2027 réel, renfort : l'offre conservée couvre tout le besoin",
+      "modele": {
+        "code": "DENSE-2025",
+        "composants": {
+          "cpu": 64.0,
+          "ram": 1024.0,
+          "ssd": 362.87999999999994
+        },
+        "cout_annuel_ht": 9800.0,
+        "prix_fournisseur_ht": 42000.0
+      },
+      "offre_conservee": {
+        "cpu": 1000000000.0,
+        "ssd": 1000000000.0
+      },
+      "regles": [
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 1,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic HOT",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1
+        },
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 2,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic COLD",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2
+        },
+        {
+          "actif": true,
+          "composant_offre": "cpu",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * 1.5",
+          "id": 3,
+          "metrique": "CPU_CORES",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "CPU Elastic",
+          "projet_id": 1,
+          "techno_id": 1
+        }
+      ],
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": {
+        "cout_acquisition": 84000.0,
+        "cout_annuel": 19600.0,
+        "details": [
+          {
+            "besoin": 318.5,
+            "besoin_residuel": 0.0,
+            "capacite_unitaire": 362.87999999999994,
+            "metrique": "DISQUE_UTILE_TO",
+            "nb_brut": 0.0,
+            "nom": "Disque Elastic HOT",
+            "regle_id": 1
+          },
+          {
+            "besoin": 97.5,
+            "besoin_residuel": 0.0,
+            "capacite_unitaire": 64.0,
+            "metrique": "CPU_CORES",
+            "nb_brut": 0.0,
+            "nom": "CPU Elastic",
+            "regle_id": 3
+          }
+        ],
+        "nb_serveurs": 2,
+        "nb_zones": null,
+        "par_zone": null,
+        "regle_limitante": 1
+      },
+      "cluster": {
+        "environnement_id": 1,
+        "id": 1,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 1,
+        "usage_fonctionnel_id": 1
+      },
+      "contraintes": {
+        "MIN_TOTAL": 2
+      },
+      "defauts": {
+        "coef_formatage": 0.9,
+        "ram_max_licence": 64.0,
+        "taux_remplissage_max": 0.7
+      },
+      "libelle": "HOT 2027 réel, renfort couvrant tout, minimum 2 imposé aux ajouts",
+      "modele": {
+        "code": "DENSE-2025",
+        "composants": {
+          "cpu": 64.0,
+          "ram": 1024.0,
+          "ssd": 362.87999999999994
+        },
+        "cout_annuel_ht": 9800.0,
+        "prix_fournisseur_ht": 42000.0
+      },
+      "offre_conservee": {
+        "cpu": 1000000000.0,
+        "ssd": 1000000000.0
+      },
+      "regles": [
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 1,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic HOT",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 1
+        },
+        {
+          "actif": true,
+          "composant_offre": "ssd",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * retention_jours * taux_compression * replication",
+          "id": 2,
+          "metrique": "DISQUE_UTILE_TO",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "Disque Elastic COLD",
+          "projet_id": 1,
+          "techno_id": 1,
+          "tier_id": 2
+        },
+        {
+          "actif": true,
+          "composant_offre": "cpu",
+          "environnement_id": 1,
+          "expression": "debit_jour_to * 1.5",
+          "id": 3,
+          "metrique": "CPU_CORES",
+          "niveau_evaluation": "PERIMETRE",
+          "nom": "CPU Elastic",
+          "projet_id": 1,
+          "techno_id": 1
+        }
+      ],
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    }
+  ],
+  "expressions": [
+    {
+      "attendu": 14.0,
+      "expression": "2 + 3 * 4",
+      "variables": {}
+    },
+    {
+      "attendu": 20.0,
+      "expression": "(2 + 3) * 4",
+      "variables": {}
+    },
+    {
+      "attendu": 4.0,
+      "expression": "ceil(7 / 2)",
+      "variables": {}
+    },
+    {
+      "attendu": 3.0,
+      "expression": "floor(7 / 2)",
+      "variables": {}
+    },
+    {
+      "attendu": 9.0,
+      "expression": "max(3, 9, 4)",
+      "variables": {}
+    },
+    {
+      "attendu": 3.0,
+      "expression": "min(3, 9, 4)",
+      "variables": {}
+    },
+    {
+      "attendu": 46.0,
+      "expression": "ceil(debit * retention / 10)",
+      "variables": {
+        "debit": 65.0,
+        "retention": 7.0
+      }
+    },
+    {
+      "attendu": 12.0,
+      "expression": "a * b * c",
+      "variables": {
+        "a": 1.5,
+        "b": 2.0,
+        "c": 4.0
+      }
+    },
+    {
+      "attendu": 7.0,
+      "expression": "-x + 10",
+      "variables": {
+        "x": 3.0
+      }
+    },
+    {
+      "attendu": 8.0,
+      "expression": "abs(0 - 5) + round(2.6)",
+      "variables": {}
+    },
+    {
+      "attendu": null,
+      "erreur": "syntaxe",
+      "expression": "debit *",
+      "variables": {}
+    },
+    {
+      "attendu": null,
+      "erreur": "variable inconnue",
+      "expression": "inconnue + 1",
+      "variables": {}
+    },
+    {
+      "attendu": null,
+      "erreur": "division par zéro",
+      "expression": "1 / 0",
+      "variables": {}
+    },
+    {
+      "attendu": null,
+      "erreur": "fonction non autorisée",
+      "expression": "__import__('os')",
+      "variables": {}
+    }
+  ],
+  "resolution": [
+    {
+      "annee": 2027,
+      "attendu": 65.0,
+      "cluster": {
+        "environnement_id": 1,
+        "id": 1,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 1,
+        "usage_fonctionnel_id": 1
+      },
+      "code": "debit_jour_to",
+      "defaut": null,
+      "libelle": "débit hérité du niveau projet/env",
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": 150.0,
+      "cluster": {
+        "environnement_id": 1,
+        "id": 1,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 1,
+        "usage_fonctionnel_id": 1
+      },
+      "code": "debit_jour_to",
+      "defaut": null,
+      "libelle": "débit surchargé par le scénario",
+      "scenario_id": 1,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": 7.0,
+      "cluster": {
+        "environnement_id": 1,
+        "id": 1,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 1,
+        "usage_fonctionnel_id": 1
+      },
+      "code": "retention_jours",
+      "defaut": null,
+      "libelle": "rétention spécialisée HOT",
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": 90.0,
+      "cluster": {
+        "environnement_id": 1,
+        "id": 2,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 2,
+        "usage_fonctionnel_id": 1
+      },
+      "code": "retention_jours",
+      "defaut": null,
+      "libelle": "rétention spécialisée COLD",
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": 0.35,
+      "cluster": {
+        "environnement_id": 1,
+        "id": 1,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 1,
+        "usage_fonctionnel_id": 1
+      },
+      "code": "taux_compression",
+      "defaut": null,
+      "libelle": "compression au niveau techno",
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": 0.25,
+      "cluster": {
+        "environnement_id": 1,
+        "id": 2,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 2,
+        "usage_fonctionnel_id": 1
+      },
+      "code": "taux_compression",
+      "defaut": null,
+      "libelle": "compression surchargée au cluster",
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": 2.0,
+      "cluster": {
+        "environnement_id": 1,
+        "id": 3,
+        "projet_id": 1,
+        "techno_id": 2,
+        "tier_id": null,
+        "usage_fonctionnel_id": 1
+      },
+      "code": "replication",
+      "defaut": null,
+      "libelle": "variable globale sans portée",
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2027,
+      "attendu": 0.9,
+      "cluster": {
+        "environnement_id": 1,
+        "id": 1,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 1,
+        "usage_fonctionnel_id": 1
+      },
+      "code": "coef_formatage",
+      "defaut": 0.9,
+      "libelle": "valeur par défaut",
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    },
+    {
+      "annee": 2030,
+      "attendu": null,
+      "cluster": {
+        "environnement_id": 1,
+        "id": 1,
+        "projet_id": 1,
+        "techno_id": 1,
+        "tier_id": 1,
+        "usage_fonctionnel_id": 1
+      },
+      "code": "debit_jour_to",
+      "defaut": null,
+      "libelle": "année absente : défaut",
+      "scenario_id": null,
+      "valeurs": [
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "valeur": 65.0
+        },
+        {
+          "annee": 2027,
+          "code": "debit_jour_to",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": 1,
+          "valeur": 150.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 1,
+          "valeur": 7.0
+        },
+        {
+          "annee": 2027,
+          "code": "retention_jours",
+          "environnement_id": 1,
+          "projet_id": 1,
+          "scenario_id": null,
+          "techno_id": 1,
+          "tier_id": 2,
+          "valeur": 90.0
+        },
+        {
+          "annee": 2027,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "techno_id": 1,
+          "valeur": 0.35
+        },
+        {
+          "annee": 2027,
+          "cluster_id": 2,
+          "code": "taux_compression",
+          "scenario_id": null,
+          "valeur": 0.25
+        },
+        {
+          "annee": 2027,
+          "code": "replication",
+          "scenario_id": null,
+          "valeur": 2.0
+        }
+      ]
+    }
+  ]
+}

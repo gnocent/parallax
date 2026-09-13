@@ -1,0 +1,308 @@
+{{/*
+Page de détail d'un serveur (v1.3) : GET /serveurs/{id}, atteinte par un lien
+classique depuis la liste (pas htmx). Trois sections indépendantes, chacune
+son propre gabarit nommé et sa propre <div id="section-...">, pour qu'une
+écriture dans l'une renvoie un fragment ciblé sans recharger les deux autres :
+
+  - "serveur_section_attributs"   formulaire des attributs documentaires
+                                    (ModifierServeur) + sélecteur de statut
+                                    (ChangerStatut, un <select> autonome qui
+                                    déclenche sa propre requête au changement)
+  - "serveur_section_revision"    révision courante, formulaire de
+                                    rattachement (cascade modèle -> révision
+                                    via "serveur_select_revisions", qui
+                                    remplace le <select id="select-revision">
+                                    au changement du <select> modèle) et
+                                    historique complet
+  - "serveur_section_affectation" affectation active (Réaffecter /
+                                    Désaffecter) ou formulaire Affecter s'il
+                                    n'y en a pas, et historique complet —
+                                    c'est cette table qui démontre qu'une
+                                    réaffectation conserve l'historique
+                                    (critère d'acceptation v1.3)
+
+Chaque section repart de detailServeur, reconstruit en base après toute
+écriture (construireDetailServeur) : le fragment renvoyé reflète toujours
+l'état réel, jamais une reconstruction partielle depuis le formulaire
+(règle n°5). Chaque sous-formulaire répond 200 avec le message d'erreur
+intégré en cas d'échec métier (ErrChevauchement notamment), jamais 4xx/5xx
+(règle n°1).
+*/}}
+
+{{define "serveur_detail_page"}}
+<p><a href="/serveurs">← {{t "serveurs.retour_liste"}}</a></p>
+<h1>{{t "serveurs.serveur_prefixe"}} #{{.Serveur.ID}}{{if .Serveur.PhysicalName}} — {{videSiNil .Serveur.PhysicalName}}{{end}}</h1>
+
+<h2>{{t "serveurs.section_attributs"}}</h2>
+{{template "serveur_section_attributs" .}}
+
+<h2>{{t "serveurs.section_revision"}}</h2>
+{{template "serveur_section_revision" .}}
+
+<h2>{{t "serveurs.section_affectation"}}</h2>
+{{template "serveur_section_affectation" .}}
+
+<h2>{{t "serveurs.section_reseau"}}</h2>
+{{template "serveur_section_reseau" .}}
+
+<div hx-get="/journal/historique/serveur/{{.Serveur.ID}}" hx-trigger="load" hx-swap="outerHTML"></div>
+{{end}}
+
+{{/*
+Section réseau (v3.1) : anomalies calculées à la lecture — signalées, jamais
+bloquantes — et attribution d'une adresse depuis les VLAN applicables à
+l'affectation active. Forcer une adresse ou un VLAN se fait dans les
+attributs, champ IP et liste VLAN : l'attribution n'est qu'une proposition.
+*/}}
+{{define "serveur_section_reseau"}}
+<div class="carte">
+  {{if .ErreurAdressage}}<p class="message-erreur">{{.ErreurAdressage}}</p>{{end}}
+  {{if .Anomalies}}
+  <p class="message-erreur" style="margin-top:0;">{{t "serveurs.reseau_anomalies_titre"}}
+    {{range .Anomalies}}<span class="badge" title="{{.Detail}}">{{.Type}}</span> {{.Detail}}<br>{{end}}
+  </p>
+  {{else}}
+  <p class="sous-titre" style="margin-top:0;">{{t "serveurs.reseau_aucune_anomalie"}}</p>
+  {{end}}
+  {{if .Serveur.IP}}
+  <p>{{t "serveurs.reseau_adresse_prefixe"}} <strong>{{videSiNil .Serveur.IP}}</strong>{{if .VlanIDOuZero}} — {{t "serveurs.reseau_vlan_label"}} {{range .Vlans}}{{if eq .ID $.VlanIDOuZero}}{{.Code}}{{end}}{{end}}{{end}}. {{t "serveurs.reseau_pour_changer"}}</p>
+  {{else if .VlansApplicables}}
+  <form method="post" action="/adressage/serveurs/{{.Serveur.ID}}" class="en-ligne" style="display:flex; gap:8px; align-items:flex-end;">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+    <input type="hidden" name="suite" value="/serveurs/{{.Serveur.ID}}">
+    <label style="margin:0;">{{t "serveurs.reseau_vlan_label"}}
+      <select name="vlan_id">
+        {{range .VlansApplicables}}<option value="{{.ID}}">{{.Code}}{{range .Plages}} {{.IPDebut}}–{{.IPFin}}{{end}}</option>{{end}}
+      </select>
+    </label>
+    <button type="submit">{{t "serveurs.reseau_attribuer_bouton"}}</button>
+  </form>
+  {{else}}
+  <p class="sous-titre">{{t "serveurs.reseau_sans_adresse"}} {{if .AffectationActive}}{{t "serveurs.reseau_sans_vlan_applicable"}} <a href="/vlans">{{t "serveurs.reseau_le_catalogue"}}</a>{{t "serveurs.reseau_ou_forcer"}}{{else}}{{t "serveurs.reseau_affecter_dabord"}}{{end}}</p>
+  {{end}}
+</div>
+{{end}}
+
+{{define "serveur_section_attributs"}}
+<div id="section-attributs" class="carte">
+{{if .ErreurAttributs}}<p class="message-erreur">{{.ErreurAttributs}}</p>{{end}}
+<form hx-put="/serveurs/{{.Serveur.ID}}" hx-target="#section-attributs" hx-swap="outerHTML">
+  <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:12px;">
+    <label style="margin:0;">{{t "serveurs.champ_nom_physique"}}
+      <input type="text" name="physical_name" value="{{videSiNil .Serveur.PhysicalName}}" maxlength="200">
+    </label>
+    <label style="margin:0;">{{t "serveurs.champ_hostname"}}
+      <input type="text" name="hostname" value="{{videSiNil .Serveur.Hostname}}" maxlength="200">
+    </label>
+    <label style="margin:0;">{{t "serveurs.champ_serial"}}
+      <input type="text" name="serial_number" value="{{videSiNil .Serveur.SerialNumber}}" maxlength="200">
+    </label>
+    <label style="margin:0;">{{t "serveurs.champ_zone"}}
+      <select name="zone_id">
+        <option value="">—</option>
+        {{range .Zones}}<option value="{{.ID}}" {{if eq .ID $.ZoneIDOuZero}}selected{{end}}>{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="margin:0;">{{t "serveurs.champ_position_zone"}}
+      <input type="text" name="position_zone" value="{{videSiNil .Serveur.PositionZone}}" maxlength="200">
+    </label>
+    <label style="margin:0;">{{t "serveurs.champ_ip"}}
+      <input type="text" name="ip" value="{{videSiNil .Serveur.IP}}" maxlength="45">
+    </label>
+    <label style="margin:0;">{{t "serveurs.champ_version_os"}}
+      <input type="text" name="version_os" value="{{videSiNil .Serveur.VersionOS}}" maxlength="100">
+    </label>
+    <label style="margin:0;">{{t "serveurs.champ_typologie"}}
+      {{$typo := videSiNil .Serveur.Typologie}}
+      <select name="typologie">
+        <option value="">—</option>
+        {{range .Typologies}}<option value="{{.}}" {{if eq . $typo}}selected{{end}}>{{.}}</option>{{end}}
+      </select>
+    </label>
+    <label style="margin:0;">{{t "serveurs.champ_vlan"}}
+      <select name="vlan_id">
+        <option value="">—</option>
+        {{range .Vlans}}<option value="{{.ID}}" {{if eq .ID $.VlanIDOuZero}}selected{{end}}>{{.Code}}</option>{{end}}
+      </select>
+    </label>
+    <label style="margin:0;">{{t "serveurs.champ_code_appli"}}
+      <input type="text" name="code_appli" value="{{videSiNil .Serveur.CodeAppli}}" maxlength="100">
+    </label>
+    <label style="margin:0;">{{t "serveurs.champ_demande_ref"}}
+      <input type="text" name="demande_ref" value="{{videSiNil .Serveur.DemandeRef}}" maxlength="100">
+    </label>
+    <label style="margin:0;">{{t "serveurs.champ_demande_serveur_ref"}}
+      <input type="text" name="demande_serveur_ref" value="{{videSiNil .Serveur.DemandeServeurRef}}" maxlength="100">
+    </label>
+  </div>
+  <label style="margin:12px 0 0;">{{t "serveurs.champ_commentaire"}}
+    <input type="text" name="commentaire" value="{{videSiNil .Serveur.Commentaire}}" maxlength="1000">
+  </label>
+  <button type="submit" style="margin-top:12px;">{{t "commun.enregistrer"}}</button>
+</form>
+
+<label style="max-width:240px; margin-top:16px;">{{t "commun.statut"}}
+  {{$statutActuel := .Serveur.Statut}}
+  <select name="statut" hx-post="/serveurs/{{.Serveur.ID}}/statut" hx-target="#section-attributs" hx-swap="outerHTML">
+    {{range .StatutsCreation}}<option value="{{.}}" {{if eq . $statutActuel}}selected{{end}}>{{.}}</option>{{end}}
+  </select>
+</label>
+</div>
+{{end}}
+
+{{define "serveur_section_revision"}}
+<div id="section-revision" class="carte">
+{{if .ErreurRevision}}<p class="message-erreur">{{.ErreurRevision}}</p>{{end}}
+
+{{if .RevisionCourante}}
+<p><strong>{{t "serveurs.revision_courante_prefixe"}}</strong> {{.RevisionCourante.ModeleCode}} — {{t "serveurs.revision_numero"}}{{.RevisionCourante.RevisionNumero}}{{if .RevisionCourante.RevisionLibelle}} ({{videSiNil .RevisionCourante.RevisionLibelle}}){{end}}, {{t "serveurs.revision_depuis"}} {{.RevisionCourante.DateDebut}}</p>
+{{else}}
+<p class="vide">{{t "serveurs.revision_aucune"}}</p>
+{{end}}
+
+<form hx-post="/serveurs/{{.Serveur.ID}}/revisions" hx-target="#section-revision" hx-swap="outerHTML">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="min-width:200px; margin:0;">{{t "serveurs.champ_modele"}}
+      <select name="modele_id"
+              hx-get="/serveurs/revisions-du-modele" hx-target="#select-revision" hx-swap="outerHTML">
+        <option value="">{{t "serveurs.choisir"}}</option>
+        {{range .Modeles}}<option value="{{.ID}}">{{.Code}}</option>{{end}}
+      </select>
+    </label>
+    <label style="min-width:220px; margin:0;">{{t "serveurs.champ_revision"}}
+      <select name="revision_id" id="select-revision" required>
+        <option value="">{{t "serveurs.choisir_modele_dabord"}}</option>
+      </select>
+    </label>
+    <label style="min-width:160px; margin:0;">{{t "serveurs.champ_date_debut"}}
+      <input type="date" name="date_debut" required>
+    </label>
+    <label style="flex:1; min-width:180px; margin:0;">{{t "serveurs.champ_commentaire"}}
+      <input type="text" name="commentaire" maxlength="500">
+    </label>
+    <button type="submit">{{t "serveurs.action_rattacher"}}</button>
+  </div>
+</form>
+
+<div class="barre-outils" style="margin:18px 0 8px;">
+  <h3 style="font-size:13px; color:var(--texte-discret); margin:0;">{{t "serveurs.historique_rattachements"}}</h3>
+  {{template "export_boutons" .ExportRattachements}}
+</div>
+<table>
+  <thead><tr><th>{{t "serveurs.champ_modele"}}</th><th>{{t "serveurs.champ_revision"}}</th><th>{{t "serveurs.champ_debut_th"}}</th><th>{{t "serveurs.champ_fin_th"}}</th></tr></thead>
+  <tbody>
+    {{range .Rattachements}}
+    <tr>
+      <td>{{.ModeleCode}}</td>
+      <td>n°{{.RevisionNumero}}{{if .RevisionLibelle}} — {{videSiNil .RevisionLibelle}}{{end}}</td>
+      <td>{{.DateDebut}}</td>
+      <td>{{if .DateFin}}{{videSiNil .DateFin}}{{else}}{{t "serveurs.en_cours"}}{{end}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="4" class="vide">{{t "serveurs.aucun_rattachement"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "serveur_select_revisions"}}
+<select name="revision_id" id="select-revision" required>
+  <option value="">{{t "serveurs.choisir"}}</option>
+  {{range .}}<option value="{{.ID}}">n°{{.Numero}}{{if .Libelle}} — {{videSiNil .Libelle}}{{end}} ({{.DateEffet}})</option>{{end}}
+</select>
+{{end}}
+
+{{define "serveur_section_affectation"}}
+<div id="section-affectation" class="carte">
+{{if .ErreurAffectation}}<p class="message-erreur">{{.ErreurAffectation}}</p>{{end}}
+
+<label style="max-width:280px; margin-bottom:14px;">{{t "serveurs.champ_scenario"}}
+  <select name="scenario"
+          hx-get="/serveurs/{{.Serveur.ID}}/affectation" hx-target="#section-affectation" hx-swap="outerHTML"
+          hx-include="this">
+    <option value="0" {{if not .ScenarioID}}selected{{end}}>{{t "serveurs.option_reel"}}</option>
+    {{range .Scenarios}}<option value="{{.ID}}" {{if eq .ID $.ScenarioID}}selected{{end}}>{{.Nom}}</option>{{end}}
+  </select>
+</label>
+{{if .ScenarioID}}
+<p class="sous-titre" style="margin-top:0;">
+  {{t "serveurs.note_ecrit_scenario"}}
+</p>
+{{end}}
+
+{{if .AffectationActive}}
+<p><strong>{{t "serveurs.cluster_actuel_prefixe"}}{{if .ScenarioID}} ({{t "serveurs.sous_ce_scenario"}}){{end}} :</strong> {{.AffectationActive.ClusterNom}}, {{t "serveurs.revision_depuis"}} {{.AffectationActive.DateDebut}}</p>
+
+<div style="display:flex; gap:32px; flex-wrap:wrap;">
+  <form hx-post="/serveurs/{{.Serveur.ID}}/reaffecter" hx-target="#section-affectation" hx-swap="outerHTML">
+    <input type="hidden" name="scenario" value="{{.ScenarioID}}">
+    <p style="margin:0 0 8px; font-weight:600;">{{t "serveurs.action_reaffecter"}}</p>
+    <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+      <label style="min-width:200px; margin:0;">{{t "serveurs.champ_nouveau_cluster"}}
+        <select name="cluster_id" required>
+          <option value="">{{t "serveurs.choisir"}}</option>
+          {{range .Clusters}}<option value="{{.ID}}">{{.Nom}}</option>{{end}}
+        </select>
+      </label>
+      <label style="min-width:160px; margin:0;">{{t "serveurs.champ_a_partir_du"}}
+        <input type="date" name="date_debut" required>
+      </label>
+      <button type="submit">{{t "serveurs.action_reaffecter"}}</button>
+    </div>
+  </form>
+
+  <form hx-post="/serveurs/{{.Serveur.ID}}/desaffecter" hx-target="#section-affectation" hx-swap="outerHTML">
+    <input type="hidden" name="scenario" value="{{.ScenarioID}}">
+    <p style="margin:0 0 8px; font-weight:600;">{{if .ScenarioID}}{{t "serveurs.action_retirer_scenario"}}{{else}}{{t "serveurs.action_desaffecter"}}{{end}}</p>
+    <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+      <label style="min-width:160px; margin:0;">{{t "serveurs.champ_fin_le"}}
+        <input type="date" name="date_fin" required>
+      </label>
+      <button type="submit" class="bouton-danger">{{if .ScenarioID}}{{t "serveurs.action_retirer"}}{{else}}{{t "serveurs.action_desaffecter"}}{{end}}</button>
+    </div>
+  </form>
+</div>
+
+{{else}}
+<p class="vide">{{t "serveurs.aucune_affectation_active"}}{{if .ScenarioID}} {{t "serveurs.sous_ce_scenario"}}{{end}}.</p>
+<form hx-post="/serveurs/{{.Serveur.ID}}/affecter" hx-target="#section-affectation" hx-swap="outerHTML">
+  <input type="hidden" name="scenario" value="{{.ScenarioID}}">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="min-width:200px; margin:0;">{{t "serveurs.champ_cluster"}}
+      <select name="cluster_id" required>
+        <option value="">{{t "serveurs.choisir"}}</option>
+        {{range .Clusters}}<option value="{{.ID}}">{{.Nom}}</option>{{end}}
+      </select>
+    </label>
+    <label style="min-width:160px; margin:0;">{{t "serveurs.champ_a_partir_du"}}
+      <input type="date" name="date_debut" required>
+    </label>
+    <button type="submit">{{t "serveurs.action_affecter"}}</button>
+  </div>
+</form>
+{{end}}
+
+<div class="barre-outils" style="margin:18px 0 8px;">
+  <h3 style="font-size:13px; color:var(--texte-discret); margin:0;">
+    {{t "serveurs.historique_affectations"}}{{if .ScenarioID}} {{t "serveurs.historique_scenario_note"}}{{end}}
+  </h3>
+  {{template "export_boutons" .ExportAffectations}}
+</div>
+<table>
+  <thead><tr><th>{{t "serveurs.champ_cluster"}}</th><th>{{t "serveurs.champ_debut_th"}}</th><th>{{t "serveurs.champ_fin_th"}}</th>{{if .ScenarioID}}<th>{{t "serveurs.champ_seau"}}</th>{{end}}</tr></thead>
+  <tbody>
+    {{range .Historique}}
+    <tr>
+      <td>{{.ClusterNom}}</td>
+      <td>{{.DateDebut}}</td>
+      <td>{{if .DateFin}}{{videSiNil .DateFin}}{{else}}{{t "serveurs.en_cours"}}{{end}}</td>
+      {{if $.ScenarioID}}<td>{{if .ScenarioID}}<span class="badge">{{t "serveurs.option_scenario"}}</span>{{else}}<span class="badge badge-actif">{{t "serveurs.badge_reel"}}</span>{{end}}</td>{{end}}
+    </tr>
+    {{else}}
+    <tr><td colspan="3" class="vide">{{t "serveurs.aucune_affectation"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}

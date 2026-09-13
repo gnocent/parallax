@@ -1,0 +1,47 @@
+{{define "import_page"}}
+<h1>{{t "nav.import"}}</h1>
+<p class="sous-titre">{{t "import.accueil.sous_titre"}}</p>
+
+<div style="display:flex; gap:16px; flex-wrap:wrap;">
+  <a class="carte" style="display:block; width:260px; text-decoration:none; color:inherit;" href="/import/referentiels">
+    <h2 style="margin-top:0">1. {{t "nav.groupe.referentiels"}}</h2>
+    <p class="sous-titre" style="margin:0;">{{t "import.accueil.referentiels_desc"}}</p>
+  </a>
+  <a class="carte" style="display:block; width:260px; text-decoration:none; color:inherit;" href="/import/clusters">
+    <h2 style="margin-top:0">2. {{t "nav.clusters"}}</h2>
+    <p class="sous-titre" style="margin:0;">{{t "import.accueil.clusters_desc"}}</p>
+  </a>
+  <a class="carte" style="display:block; width:260px; text-decoration:none; color:inherit;" href="/import/modeles">
+    <h2 style="margin-top:0">3. {{t "nav.modeles"}}</h2>
+    <p class="sous-titre" style="margin:0;">{{t "import.accueil.modeles_desc"}}</p>
+  </a>
+  <a class="carte" style="display:block; width:260px; text-decoration:none; color:inherit;" href="/import/serveurs">
+    <h2 style="margin-top:0">4. {{t "nav.serveurs"}}</h2>
+    <p class="sous-titre" style="margin:0;">{{t "import.accueil.serveurs_desc"}}</p>
+  </a>
+  <a class="carte" style="display:block; width:260px; text-decoration:none; color:inherit;" href="/import/vlans">
+    <h2 style="margin-top:0">5. {{t "import.accueil.vlans_titre"}}</h2>
+    <p class="sous-titre" style="margin:0;">{{t "import.accueil.vlans_desc"}}</p>
+  </a>
+  <a class="carte" style="display:block; width:260px; text-decoration:none; color:inherit;" href="/import/serveurs/maj">
+    <h2 style="margin-top:0">{{t "import.accueil.maj_titre"}}</h2>
+    <p class="sous-titre" style="margin:0;">{{t "import.accueil.maj_desc"}}</p>
+  </a>
+</div>
+
+<p class="sous-titre" style="margin-top:20px;">
+  {{t "import.accueil.ordre"}}
+</p>
+
+<div class="carte" style="margin-top:8px;">
+  <h2 style="margin-top:0">{{t "import.accueil.exemples_titre"}}</h2>
+  <p class="sous-titre" style="margin-bottom:14px;">{{t "import.accueil.exemples_desc"}}</p>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <a class="bouton bouton-discret bouton-petit" href="/import/exemples/referentiels">1. {{t "nav.groupe.referentiels"}}</a>
+    <a class="bouton bouton-discret bouton-petit" href="/import/exemples/clusters">2. {{t "nav.clusters"}}</a>
+    <a class="bouton bouton-discret bouton-petit" href="/import/exemples/modeles">3. {{t "nav.modeles"}}</a>
+    <a class="bouton bouton-discret bouton-petit" href="/import/exemples/serveurs">4. {{t "nav.serveurs"}}</a>
+    <a class="bouton bouton-discret bouton-petit" href="/import/exemples/vlans">5. {{t "import.accueil.vlans_titre"}}</a>
+  </div>
+</div>
+{{end}}

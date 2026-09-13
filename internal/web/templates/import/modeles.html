@@ -1,0 +1,106 @@
+{{/*
+Écran d'import des modèles (v1.4 du backlog) — voir le commentaire en tête de
+handlers_import_modeles.go.
+
+  - "import_modeles_page"     page complète : explication du format, exemple,
+                                formulaire d'analyse (mode simulation)
+  - "import_modeles_resultat" fragment de résultat, commun à l'analyse et à la
+                                confirmation — voir rapportImportModeles pour
+                                les quatre issues qu'il peut afficher
+*/}}
+
+{{define "import_modeles_page"}}
+<h1>{{t "import.modeles.titre"}}</h1>
+<p class="sous-titre">
+  {{t "import.modeles.sous_titre"}}
+</p>
+
+<div class="carte">
+  <h2>{{t "import.modeles.format_titre"}}</h2>
+  <p>{{t "import.modeles.format_csv"}}</p>
+
+  <p><strong>{{t "import.modeles.colonnes_obligatoires"}}</strong> : <code>type</code>, <code>annee</code>, <code>code</code>.</p>
+
+  <p><strong>{{t "import.modeles.colonnes_facultatives"}}</strong> : <code>description</code>,
+  <code>mode_financement</code> (<code>ACHAT</code> {{t "import.commun.ou"}} <code>LEASE</code>, {{t "import.modeles.vide_autorise"}}),
+  <code>duree_lease_mois</code>, <code>date_debut_lease</code> (<code>YYYY-MM-DD</code>),
+  <code>prix_fournisseur_ht</code>, <code>cout_annuel_ht</code>, <code>duree_cout_annees</code>.
+  {{t "import.modeles.nombres_decimaux"}}</p>
+
+  <p><strong>{{t "import.modeles.composants_titre"}}</strong> {{t "import.modeles.composants_tous_facultatifs"}} {{t "import.modeles.composants_desc"}}</p>
+  <table>
+    <thead><tr><th>{{t "import.modeles.table_colonnes"}}</th><th>{{t "import.modeles.table_composant_cree"}}</th></tr></thead>
+    <tbody>
+      <tr><td><code>cpu_coeurs</code></td><td>CPU, code <code>cpu</code> — {{t "import.modeles.desc_cpu"}}</td></tr>
+      <tr><td><code>specrate</code></td><td>CPU, code <code>specrate</code> — {{t "import.modeles.desc_specrate"}}</td></tr>
+      <tr><td><code>phoronix</code></td><td>CPU, code <code>phoronix</code> — {{t "import.modeles.desc_phoronix"}}</td></tr>
+      <tr><td><code>ram_go</code></td><td>RAM, code <code>ram</code> — {{t "import.modeles.desc_ram"}}</td></tr>
+      <tr><td><code>hdd_nb</code> + <code>hdd_to</code></td><td>DISQUE_DATA, code <code>hdd</code> — {{t "import.modeles.desc_disque"}}</td></tr>
+      <tr><td><code>ssd_nb</code> + <code>ssd_to</code></td><td>DISQUE_DATA, code <code>ssd</code> — {{t "import.modeles.desc_disque"}}</td></tr>
+      <tr><td><code>nic_nb</code> + <code>nic_gbps</code></td><td>NIC, code <code>nic</code> — {{t "import.modeles.desc_nic"}}</td></tr>
+      <tr><td><code>gpu_nb</code></td><td>GPU, code <code>gpu</code> — {{t "import.modeles.desc_gpu_nb"}}</td></tr>
+      <tr><td><code>gpu_nb</code> + <code>gpu_ram_go</code></td><td>GPU, code <code>gpu_ram</code> — {{t "import.modeles.desc_gpu_ram"}}</td></tr>
+      <tr><td><code>gpu_nb</code> + <code>gpu_tflops_fp8</code></td><td>GPU, code <code>gpu_fp8</code> — {{t "import.modeles.desc_gpu_fp8"}}</td></tr>
+      <tr><td><code>gpu_nb</code> + <code>gpu_bp_tos</code></td><td>GPU, code <code>gpu_bp</code> — {{t "import.modeles.desc_gpu_bp"}}</td></tr>
+    </tbody>
+  </table>
+  <p>{{t "import.modeles.gpu_note_1"}} <code>gpu_nb</code> ; <code>gpu_nb</code> {{t "import.modeles.gpu_note_2"}} {{t "import.modeles.gpu_note_3"}}</p>
+
+  <p>{{t "import.commun.exemple"}} :</p>
+  <pre>type;annee;code;mode_financement;cpu_coeurs;specrate;ram_go;ssd_nb;ssd_to;nic_nb;nic_gbps
+DENSE;2025;DENSE-2025;LEASE;64;480;1024;24;7,68;2;25
+LEGACY;2024;LEGACY-2024;ACHAT;48;310;512;8;3,84;2;10
+ECO;2024;ECO-2024;;;;;;;;</pre>
+  <p style="margin:10px 0 0;"><a href="/import/exemples/modeles">{{t "import.commun.telecharger_exemple"}}</a></p>
+</div>
+
+<div class="carte">
+  <h2>{{t "import.modeles.analyser_titre"}}</h2>
+  <p class="sous-titre">{{t "import.modeles.analyser_desc"}}</p>
+  <form hx-post="/import/modeles/analyser" hx-target="#resultat-import-modeles" hx-swap="innerHTML"
+        hx-encoding="multipart/form-data">
+    <label>{{t "import.commun.fichier_csv"}}
+      <input type="file" name="fichier" accept=".csv" required>
+    </label>
+    <button type="submit">{{t "import.commun.analyser"}}</button>
+  </form>
+</div>
+
+<div id="resultat-import-modeles"></div>
+{{end}}
+
+{{define "import_modeles_resultat"}}
+{{if .MessageJeton}}
+<div class="carte">
+  <p class="message-erreur">{{.MessageJeton}}</p>
+</div>
+{{else if .Erreurs}}
+{{template "import_etapes" "erreurs"}}
+<div class="carte">
+  <p class="message-erreur">
+    {{len .Erreurs}} {{t "import.commun.lignes_erreur_sur"}} {{.NbLignes}} — {{t "import.modeles.aucun_modele_importe"}}
+  </p>
+  <ul>
+    {{range .Erreurs}}<li>{{t "import.commun.ligne"}} {{.Ligne}} : {{.Message}}</li>{{end}}
+  </ul>
+</div>
+{{else if .Ecrit}}
+{{template "import_etapes" "ecrit"}}
+<div class="carte">
+  <p class="message-succes">
+    {{.NbCreees}} {{t "import.modeles.modeles_importes"}}, {{.NbRevisions}} {{t "import.modeles.revisions"}}, {{.NbComposants}} {{t "import.modeles.composants"}}.
+  </p>
+</div>
+{{else}}
+{{template "import_etapes" "pret"}}
+<div class="carte">
+  <p class="message-succes">
+    {{.NbModeles}} {{t "import.modeles.modeles_prets"}}, {{.NbRevisions}} {{t "import.modeles.revisions"}}, {{.NbComposants}} {{t "import.modeles.composants"}}.
+  </p>
+  <form hx-post="/import/modeles/confirmer" hx-target="#resultat-import-modeles" hx-swap="innerHTML">
+    <input type="hidden" name="jeton" value="{{.Jeton}}">
+    <button type="submit">{{t "import.commun.confirmer_import"}}</button>
+  </form>
+</div>
+{{end}}
+{{end}}

@@ -1,0 +1,218 @@
+{{/*
+Écran Scénarios (v2.1) — étend le patron de projets/liste.html (lire son
+commentaire de tête d'abord) avec un statut à quatre valeurs piloté par des
+actions dédiées (jamais saisi directement) et une page de promotion séparée.
+
+  - "scenarios_page"           page complète (création + case "inclure les
+                                 clos" + tableau)
+  - "scenarios_tableau"        le <table id="tableau-scenarios">, rechargé
+                                 par la case et renvoyé en entier par la
+                                 création (jamais seulement la ligne créée)
+  - "scenarios_ligne"          une ligne en lecture ; les actions proposées
+                                 dépendent du statut courant (voir
+                                 handlers_scenario.go, scenariosBasculerStatut)
+  - "scenarios_ligne_edition"  la même ligne en édition (nom, description,
+                                 projet) — le statut ne s'y saisit jamais
+  - "scenario_promotion_page"  page complète dédiée, pas un fragment htmx :
+                                 choisir les scénarios concurrents à abandonner
+                                 est une décision engageante et jamais déduite
+                                 automatiquement
+
+Badges de statut, avec les seules classes déjà définies ailleurs (badge,
+badge-actif, badge-inactif) : BROUILLON en neutre (badge nu), ACTIF en
+positif (badge-actif), ABANDONNE et RETENU en discret (badge-inactif) — RETENU
+est un état terminal, sans aucune action de ligne.
+*/}}
+
+{{define "scenarios_page"}}
+<h1>{{t "scenarios.titre"}}</h1>
+<p class="sous-titre">{{t "scenarios.sous_titre"}}</p>
+
+<form class="carte" style="margin-bottom:18px" hx-post="/scenarios"
+      hx-target="#tableau-scenarios" hx-swap="outerHTML"
+      hx-include="[name='inclure_inactifs']">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:2; min-width:220px; margin:0;">{{t "simulation.champ_nom"}}
+      <input type="text" name="nom" required maxlength="120" placeholder="Bascule Kafka 2026">
+    </label>
+    <label style="flex:1; min-width:180px; margin:0;">{{t "simulation.champ_projet"}}
+      <select name="projet_id">
+        <option value="">—</option>
+        {{range .Projets}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+  </div>
+  <div style="margin-top:10px;">
+    <label style="margin:0;">{{t "scenarios.description"}}
+      <textarea name="description" required maxlength="2000" rows="2"
+                placeholder="L'hypothèse posée par ce scénario"></textarea>
+    </label>
+    <small style="display:block; margin-top:-6px; color:var(--texte-discret);">
+      {{t "scenarios.description_aide"}}
+    </small>
+  </div>
+  <div style="margin-top:10px;">
+    <button type="submit">{{t "scenarios.creer"}}</button>
+  </div>
+</form>
+
+<div class="barre-outils">
+  <label style="margin:0; display:flex; align-items:center; gap:6px;">
+    <input type="checkbox" name="inclure_inactifs"
+           hx-get="/scenarios/tableau" hx-target="#tableau-scenarios" hx-swap="outerHTML">
+    {{t "scenarios.inclure_clos"}}
+  </label>
+</div>
+
+{{template "scenarios_tableau" .}}
+{{end}}
+
+{{define "scenarios_tableau"}}
+<div id="tableau-scenarios">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr>
+    <th>{{t "simulation.champ_nom"}}</th><th>{{t "simulation.champ_projet"}}</th><th>{{t "scenarios.description"}}</th><th>{{t "commun.statut"}}</th><th>{{t "scenarios.cree_le"}}</th><th></th>
+  </tr></thead>
+  <tbody>
+    {{range .Scenarios}}{{template "scenarios_ligne" .}}{{else}}
+    <tr><td colspan="6" class="vide">{{t "scenarios.aucun"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "scenarios_ligne"}}
+<tr id="scenario-{{.ID}}">
+  <td>{{.Nom}}{{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}</td>
+  <td>{{if .ProjetLibelle}}{{.ProjetLibelle}}{{else}}—{{end}}</td>
+  <td>{{.Description}}</td>
+  <td>
+    {{if eq .Statut "ACTIF"}}<span class="badge badge-actif">{{t "commun.actif"}}</span>
+    {{else if eq .Statut "ABANDONNE"}}<span class="badge badge-abandonne">{{t "scenarios.statut_abandonne"}}</span>
+    {{else if eq .Statut "RETENU"}}<span class="badge badge-retenu">{{t "scenarios.statut_retenu"}}</span>
+    {{else}}<span class="badge">{{t "scenarios.statut_brouillon"}}</span>{{end}}
+  </td>
+  <td>{{.DateCreation}}</td>
+  <td class="actions-ligne">
+    {{if eq .Statut "BROUILLON"}}
+    <button class="bouton-discret bouton-petit"
+            hx-post="/scenarios/{{.ID}}/activer" hx-target="#scenario-{{.ID}}" hx-swap="outerHTML">{{t "scenarios.activer"}}</button>
+    <button class="bouton-discret bouton-petit"
+            hx-post="/scenarios/{{.ID}}/abandonner" hx-target="#scenario-{{.ID}}" hx-swap="outerHTML">{{t "scenarios.abandonner"}}</button>
+    <button class="bouton-discret bouton-petit"
+            hx-get="/scenarios/{{.ID}}/editer" hx-target="#scenario-{{.ID}}" hx-swap="outerHTML">{{t "commun.modifier"}}</button>
+    <a class="bouton bouton-discret bouton-petit" href="/adressage/scenarios/{{.ID}}" title="{{t "scenarios.adresser_aide"}}">{{t "scenarios.adresser"}}</a>
+    <a class="bouton bouton-discret bouton-petit" href="/scenarios/{{.ID}}/promouvoir">{{t "scenarios.promouvoir"}}</a>
+    {{else if eq .Statut "ACTIF"}}
+    <button class="bouton-discret bouton-petit"
+            hx-post="/scenarios/{{.ID}}/abandonner" hx-target="#scenario-{{.ID}}" hx-swap="outerHTML">{{t "scenarios.abandonner"}}</button>
+    <button class="bouton-discret bouton-petit"
+            hx-get="/scenarios/{{.ID}}/editer" hx-target="#scenario-{{.ID}}" hx-swap="outerHTML">{{t "commun.modifier"}}</button>
+    <a class="bouton bouton-discret bouton-petit" href="/adressage/scenarios/{{.ID}}" title="{{t "scenarios.adresser_aide"}}">{{t "scenarios.adresser"}}</a>
+    <a class="bouton bouton-discret bouton-petit" href="/scenarios/{{.ID}}/promouvoir">{{t "scenarios.promouvoir"}}</a>
+    {{else if eq .Statut "ABANDONNE"}}
+    <button class="bouton-discret bouton-petit"
+            hx-post="/scenarios/{{.ID}}/reprendre" hx-target="#scenario-{{.ID}}" hx-swap="outerHTML">{{t "scenarios.reprendre"}}</button>
+    {{end}}
+  </td>
+</tr>
+{{end}}
+
+{{define "scenarios_ligne_edition"}}
+<tr id="scenario-{{.ID}}">
+  <td>
+    <input type="text" name="nom" value="{{.Nom}}" required maxlength="120">
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td>
+    <select name="projet_id">
+      <option value="" {{if not .ProjetIDOuZero}}selected{{end}}>—</option>
+      {{range .Projets}}<option value="{{.ID}}" {{if eq .ID $.ProjetIDOuZero}}selected{{end}}>{{.Libelle}}</option>{{end}}
+    </select>
+  </td>
+  <td><textarea name="description" required maxlength="2000" rows="2">{{.Description}}</textarea></td>
+  <td>
+    {{if eq .Statut "ACTIF"}}<span class="badge badge-actif">{{t "commun.actif"}}</span>
+    {{else if eq .Statut "ABANDONNE"}}<span class="badge badge-abandonne">{{t "scenarios.statut_abandonne"}}</span>
+    {{else if eq .Statut "RETENU"}}<span class="badge badge-retenu">{{t "scenarios.statut_retenu"}}</span>
+    {{else}}<span class="badge">{{t "scenarios.statut_brouillon"}}</span>{{end}}
+  </td>
+  <td>{{.DateCreation}}</td>
+  <td class="actions-ligne">
+    <button class="bouton-petit"
+            hx-put="/scenarios/{{.ID}}" hx-include="closest tr" hx-target="#scenario-{{.ID}}" hx-swap="outerHTML">{{t "commun.enregistrer"}}</button>
+    <button type="button" class="bouton-discret bouton-petit"
+            hx-get="/scenarios/{{.ID}}" hx-target="#scenario-{{.ID}}" hx-swap="outerHTML">{{t "commun.annuler"}}</button>
+  </td>
+</tr>
+{{end}}
+
+{{define "scenario_promotion_page"}}
+<h1>{{t "scenarios.promouvoir"}} « {{.Scenario.Nom}} »</h1>
+<p class="sous-titre">{{.Scenario.Description}}</p>
+
+{{/* Étapes du cycle de vie (BROUILLON -> ACTIF -> RETENU) : cette page est
+     l'étape de transition vers RETENU, donc jamais elle-même "faite". */}}
+<div class="chemin">
+  <div class="etape {{if ne .Scenario.Statut "BROUILLON"}}faite{{else}}courante{{end}}">
+    <div class="etape-puce">{{if ne .Scenario.Statut "BROUILLON"}}✓{{else}}1{{end}}</div>
+    <div class="etape-libelle">{{t "scenarios.statut_brouillon"}}</div>
+    <div class="etape-trait"></div>
+  </div>
+  <div class="etape {{if eq .Scenario.Statut "ACTIF"}}courante{{end}}">
+    <div class="etape-puce">2</div>
+    <div class="etape-libelle">{{t "commun.actif"}}</div>
+    <div class="etape-trait"></div>
+  </div>
+  <div class="etape">
+    <div class="etape-puce">3</div>
+    <div class="etape-libelle">{{t "scenarios.statut_retenu"}}</div>
+  </div>
+</div>
+
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+
+<div class="carte" style="margin-bottom:18px;">
+  <p style="margin:0;">
+    {{t "scenarios.promotion_explication_avant"}} <strong>RETENU</strong>{{t "scenarios.promotion_explication_apres"}}
+  </p>
+</div>
+
+<form method="post" action="/scenarios/{{.Scenario.ID}}/promouvoir">
+  <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+
+  <div class="carte" style="margin-bottom:18px;">
+    <h2 style="margin-top:0">{{t "scenarios.concurrents_titre"}}</h2>
+    {{if .Concurrents}}
+    <p class="sous-titre" style="margin-bottom:10px;">
+      {{t "scenarios.concurrents_aide"}}
+    </p>
+    {{/* Pas de boutons d'export ici (v3.0) : ce tableau est une saisie
+         (cases à cocher), pas une liste de données — celle-ci s'exporte
+         depuis /scenarios. */}}
+    <table>
+      <thead><tr><th></th><th>{{t "simulation.champ_nom"}}</th><th>{{t "commun.statut"}}</th></tr></thead>
+      <tbody>
+        {{range .Concurrents}}
+        <tr>
+          <td><input type="checkbox" name="abandonner" value="{{.ID}}" style="width:auto"></td>
+          <td>{{.Nom}}</td>
+          <td>{{if eq .Statut "ACTIF"}}<span class="badge badge-actif">{{t "commun.actif"}}</span>{{else}}<span class="badge">{{t "scenarios.statut_brouillon"}}</span>{{end}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    {{else}}
+    <p class="vide">{{t "scenarios.concurrents_aucun"}}</p>
+    {{end}}
+  </div>
+
+  <div style="display:flex; gap:10px; align-items:center;">
+    <button type="submit">{{t "scenarios.promouvoir_confirmer"}}</button>
+    <a href="/scenarios">{{t "scenarios.annuler_retour"}}</a>
+  </div>
+</form>
+{{end}}

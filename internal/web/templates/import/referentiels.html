@@ -1,0 +1,82 @@
+{{/*
+Écran d'import des référentiels : un seul fichier pour les six tables
+(projet, environnement, techno, tier, usage, zone), distinguées par la
+colonne « type ». Analyse (jamais d'écriture) puis confirmation dans une
+transaction unique — voir handlers_import_referentiels.go.
+
+  - "import_referentiels_page"      page complète
+  - "import_referentiels_resultat"  fragment : erreurs / simulation / écrit
+*/}}
+
+{{define "import_referentiels_page"}}
+<h1>{{t "import.referentiels.titre"}}</h1>
+<p class="sous-titre">
+  {{t "import.referentiels.sous_titre_1"}} <a href="/import/clusters">{{t "import.referentiels.lien_clusters"}}</a>{{t "import.referentiels.sous_titre_2"}}
+</p>
+
+<div class="carte" style="margin-bottom:18px">
+  <h2 style="margin-top:0">{{t "import.commun.format_attendu"}}</h2>
+  <p class="sous-titre" style="margin-bottom:10px;">
+    {{t "import.commun.format_csv_standard"}}
+  </p>
+  <p><strong>{{t "import.commun.obligatoires"}}</strong> :
+    <code>type</code> (<code>PROJET</code>, <code>ENVIRONNEMENT</code>,
+    <code>TECHNO</code>, <code>TIER</code>, <code>USAGE</code> {{t "import.commun.ou"}} <code>ZONE</code>),
+    <code>code</code>, <code>libelle</code>.</p>
+  <p><strong>{{t "import.commun.facultatives"}}</strong> :
+    <code>ordre</code> ({{t "import.referentiels.ordre_desc"}}),
+    <code>site</code> ({{t "import.referentiels.site_desc"}}).</p>
+  <p>{{t "import.referentiels.code_existant"}}</p>
+  <p>{{t "import.commun.exemple"}} :</p>
+  <pre style="background:#eef1f4; padding:10px; border-radius:6px; overflow-x:auto; margin:0;">type;code;libelle;ordre;site
+PROJET;LOGS;Plateforme de logs;;
+ENVIRONNEMENT;PROD;Production;1;
+ENVIRONNEMENT;PREPROD;Pré-production;2;
+TECHNO;ELASTIC;Elasticsearch;;
+TIER;HOT;Données chaudes;1;
+USAGE;INGEST;Ingestion;;
+ZONE;AZ1;Zone 1;;Site A</pre>
+  <p style="margin:10px 0 0;"><a href="/import/exemples/referentiels">{{t "import.commun.telecharger_exemple"}}</a></p>
+</div>
+
+<form class="carte" hx-post="/import/referentiels/analyser" hx-encoding="multipart/form-data"
+      hx-target="#resultat-import-referentiels" hx-swap="innerHTML">
+  <label style="max-width:420px;">{{t "import.commun.fichier_csv"}}
+    <input type="file" name="fichier" accept=".csv" required>
+  </label>
+  <button type="submit">{{t "import.commun.analyser"}}</button>
+</form>
+
+<div id="resultat-import-referentiels" style="margin-top:18px;"></div>
+{{end}}
+
+{{define "import_referentiels_resultat"}}
+{{if .MessageJeton}}
+<p class="message-erreur">{{.MessageJeton}}</p>
+{{else if .Erreurs}}
+{{template "import_etapes" "erreurs"}}
+<div class="message-erreur">
+  <p style="margin:0 0 8px;"><strong>{{len .Erreurs}} {{t "import.commun.lignes_erreur_sur"}} {{.NbLignes}}</strong>
+    — {{t "import.commun.aucune_ecriture"}}</p>
+  <ul style="margin:0; padding-left:18px;">
+    {{range .Erreurs}}<li>{{t "import.commun.ligne"}} {{.Ligne}} : {{.Message}}</li>{{end}}
+  </ul>
+</div>
+{{else if .Ecrit}}
+{{template "import_etapes" "ecrit"}}
+<p class="message-succes">
+  {{t "import.commun.import_effectue"}} {{range $i, $c := .Comptes}}{{if $i}}, {{end}}{{$c.Nb}} {{$c.Libelle}}(s){{end}}.
+</p>
+{{else}}
+{{template "import_etapes" "pret"}}
+<div class="carte">
+  <p style="margin:0 0 12px;" class="message-succes">
+    {{.NbLignes}} {{t "import.commun.lignes_valides"}} — {{range $i, $c := .Comptes}}{{if $i}}, {{end}}{{$c.Nb}} {{$c.Libelle}}(s){{end}}. {{t "import.commun.rien_ecrit"}}
+  </p>
+  <form hx-post="/import/referentiels/confirmer" hx-target="#resultat-import-referentiels" hx-swap="innerHTML">
+    <input type="hidden" name="jeton" value="{{.Jeton}}">
+    <button type="submit">{{t "import.commun.confirmer_import"}}</button>
+  </form>
+</div>
+{{end}}
+{{end}}

@@ -1,0 +1,93 @@
+{{/*
+Écran d'import des serveurs (v1.4) : analyse (jamais d'écriture) puis
+confirmation (écriture réelle, dans une seule transaction — voir
+handlers_import_serveurs.go).
+
+  - "import_serveurs_page"     page complète : format attendu, exemple,
+                                  formulaire d'envoi du fichier
+  - "import_serveurs_resultat" fragment de résultat, trois états possibles :
+                                  erreurs de validation (liste « Ligne N : … »),
+                                  simulation réussie (bouton Confirmer, jeton
+                                  cache dans un champ caché), import écrit
+                                  (résumé final)
+
+Le formulaire d'analyse poste en multipart/form-data (hx-encoding) : htmx
+pose quand même l'en-tête X-CSRF-Token, hérité de hx-headers sur <body>
+(mise_en_page.html), donc verifierCSRF n'a pas besoin d'un champ dédié ici.
+*/}}
+
+{{define "import_serveurs_page"}}
+<h1>{{t "import.serveurs.titre"}}</h1>
+<p class="sous-titre">
+  {{t "import.serveurs.sous_titre_1"}} <a href="/import/modeles">{{t "import.serveurs.lien_modeles"}}</a> {{t "import.serveurs.sous_titre_2"}} <code>modele_code</code>.
+</p>
+
+<div class="carte" style="margin-bottom:18px">
+  <h2 style="margin-top:0">{{t "import.commun.format_attendu"}}</h2>
+  <p class="sous-titre" style="margin-bottom:10px;">
+    {{t "import.commun.format_csv_standard"}}
+  </p>
+  <p><strong>{{t "import.commun.obligatoires"}}</strong> :
+    <code>physical_name</code>,
+    <code>statut</code> (COMMANDE, EN_SERVICE {{t "import.commun.ou"}} DECOMMISSIONNE —
+    {{t "import.serveurs.hypothese_note"}}),
+    <code>date_entree</code> (YYYY-MM-DD).</p>
+  <p><strong>{{t "import.serveurs.attributs_facultatifs"}}</strong> :
+    <code>hostname</code>, <code>serial_number</code>,
+    <code>zone_code</code> ({{t "import.commun.doit_exister"}}), <code>position_zone</code>,
+    <code>ip</code>, <code>version_os</code>, <code>typologie</code>,
+    <code>code_appli</code>, <code>demande_ref</code>, <code>demande_serveur_ref</code>,
+    <code>commentaire</code>.</p>
+  <p><strong>{{t "import.serveurs.affectation_titre"}}</strong> — <code>projet_code</code>,
+    <code>environnement_code</code> {{t "import.commun.et"}} <code>cluster_nom</code> {{t "import.serveurs.affectation_desc1"}}
+    <code>date_affectation</code> {{t "import.serveurs.affectation_desc2"}} <code>date_entree</code>.</p>
+  <p><strong>{{t "import.serveurs.rattachement_titre"}}</strong> — <code>modele_code</code>
+    ({{t "import.serveurs.rattachement_desc"}}). <code>date_rattachement</code> {{t "import.serveurs.affectation_desc2"}}
+    <code>date_entree</code>.</p>
+  <p class="sous-titre" style="margin:10px 0 4px;">{{t "import.commun.exemple"}} :</p>
+  <pre style="background:#eef1f4; padding:10px; border-radius:6px; overflow-x:auto; margin:0;">physical_name;statut;date_entree;zone_code;projet_code;environnement_code;cluster_nom;modele_code
+PHY00123;EN_SERVICE;2023-03-01;DC1;LOGS;PROD;ElasticHot1;DENSE-2023
+PHY00124;EN_SERVICE;2023-03-01;DC1;LOGS;PROD;ElasticHot1;DENSE-2023
+PHY00200;COMMANDE;2024-11-15;;;;;</pre>
+  <p style="margin:10px 0 0;"><a href="/import/exemples/serveurs">{{t "import.commun.telecharger_exemple"}}</a></p>
+</div>
+
+<form class="carte" hx-post="/import/serveurs/analyser" hx-encoding="multipart/form-data"
+      hx-target="#resultat-import-serveurs" hx-swap="innerHTML">
+  <label style="max-width:420px;">{{t "import.commun.fichier_csv"}}
+    <input type="file" name="fichier" accept=".csv" required>
+  </label>
+  <button type="submit">{{t "import.commun.analyser"}}</button>
+</form>
+
+<div id="resultat-import-serveurs" style="margin-top:18px;"></div>
+{{end}}
+
+{{define "import_serveurs_resultat"}}
+{{if .Rapport.Erreurs}}
+{{template "import_etapes" "erreurs"}}
+<div class="message-erreur">
+  <p style="margin:0 0 8px;"><strong>{{len .Rapport.Erreurs}} {{t "import.commun.lignes_erreur_sur"}} {{.Rapport.NbLignes}}</strong>
+    — {{t "import.commun.aucune_ecriture"}}</p>
+  <ul style="margin:0; padding-left:18px;">
+    {{range .Rapport.Erreurs}}<li>{{t "import.commun.ligne"}} {{.Ligne}} : {{.Message}}</li>{{end}}
+  </ul>
+</div>
+{{else if .Rapport.Ecrit}}
+{{template "import_etapes" "ecrit"}}
+<p class="message-succes">
+  {{.Rapport.NbCreees}} {{t "import.serveurs.serveurs_importes"}} {{.Rapport.NbLignes}} {{t "import.commun.ligne_s_point"}}
+</p>
+{{else}}
+{{template "import_etapes" "pret"}}
+<div class="carte">
+  <p style="margin:0 0 12px;" class="message-succes">
+    {{.Rapport.NbLignes}} {{t "import.commun.lignes_valides"}} — {{t "import.commun.aucune_erreur_detectee"}} {{t "import.commun.rien_ecrit"}}
+  </p>
+  <form hx-post="/import/serveurs/confirmer" hx-target="#resultat-import-serveurs" hx-swap="innerHTML">
+    <input type="hidden" name="jeton" value="{{.Jeton}}">
+    <button type="submit">{{t "import.commun.confirmer_import"}}</button>
+  </form>
+</div>
+{{end}}
+{{end}}

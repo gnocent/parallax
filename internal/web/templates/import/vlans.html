@@ -1,0 +1,83 @@
+{{/*
+Écran d'import du catalogue réseau (backlog v3.1) : VLAN et plages dans un
+seul fichier, une ligne par plage. Analyse (jamais d'écriture) puis
+confirmation dans une transaction unique — voir handlers_import_vlans.go.
+
+  - "import_vlans_page"      page complète
+  - "import_vlans_resultat"  fragment : erreurs / simulation / écrit
+*/}}
+
+{{define "import_vlans_page"}}
+<h1>{{t "import.vlans.titre"}}</h1>
+<p class="sous-titre">
+  {{t "import.vlans.sous_titre"}}
+</p>
+
+<div class="carte" style="margin-bottom:18px">
+  <h2 style="margin-top:0">{{t "import.commun.format_attendu"}}</h2>
+  <p class="sous-titre" style="margin-bottom:10px;">
+    {{t "import.commun.format_csv_standard"}}
+    {{t "import.vlans.format_extra"}}
+  </p>
+  <p><strong>{{t "import.commun.obligatoire"}}</strong> : <code>code</code>.</p>
+  <p><strong>{{t "import.vlans.criteres_titre"}}</strong>, {{t "import.vlans.criteres_desc1"}} :
+    <code>projet_code</code>, <code>environnement_code</code>, <code>zone_code</code>,
+    <code>cluster_nom</code> {{t "import.vlans.criteres_exige1"}} <code>projet_code</code> {{t "import.commun.et"}}
+    <code>environnement_code</code> {{t "import.vlans.criteres_exige2"}} {{t "import.vlans.criteres_meme_code"}}</p>
+  <p><strong>{{t "import.vlans.plage_titre"}}</strong> : <code>ip_debut</code> {{t "import.commun.et"}} <code>ip_fin</code>,
+    {{t "import.vlans.plage_desc1"}}
+    <code>commentaire</code> {{t "import.vlans.plage_desc2"}}</p>
+  <p>{{t "import.vlans.code_existant"}}</p>
+  <p>{{t "import.commun.exemple"}} :</p>
+  <pre style="background:#eef1f4; padding:10px; border-radius:6px; overflow-x:auto; margin:0;">code;projet_code;environnement_code;zone_code;cluster_nom;ip_debut;ip_fin;commentaire
+VL-LOGS-PROD-DC1;LOGS;PROD;DC1;;10.10.1.10;10.10.1.250;Production DC1
+VL-LOGS-PROD-DC1;LOGS;PROD;DC1;;10.10.2.10;10.10.2.250;
+VL-LOGS-PROD-DC2;LOGS;PROD;DC2;;10.20.1.10;10.20.1.250;Production DC2
+VL-LOGS-PREPROD;LOGS;PREPROD;;;10.30.1.10;10.30.1.250;
+VL-KAFKA;LOGS;PROD;;Kafka;10.40.1.10;10.40.1.100;Réservé au cluster Kafka
+VL-ADMIN;;;;;;;Sans plage pour l'instant</pre>
+  <p style="margin:10px 0 0;"><a href="/import/exemples/vlans">{{t "import.commun.telecharger_exemple"}}</a></p>
+</div>
+
+<form class="carte" hx-post="/import/vlans/analyser" hx-encoding="multipart/form-data"
+      hx-target="#resultat-import-vlans" hx-swap="innerHTML">
+  <label style="max-width:420px;">{{t "import.commun.fichier_csv"}}
+    <input type="file" name="fichier" accept=".csv" required>
+  </label>
+  <button type="submit">{{t "import.commun.analyser"}}</button>
+</form>
+
+<div id="resultat-import-vlans" style="margin-top:18px;"></div>
+{{end}}
+
+{{define "import_vlans_resultat"}}
+{{if .MessageJeton}}
+<p class="message-erreur">{{.MessageJeton}}</p>
+{{else if .Erreurs}}
+{{template "import_etapes" "erreurs"}}
+<div class="message-erreur">
+  <p style="margin:0 0 8px;"><strong>{{len .Erreurs}} {{t "import.commun.lignes_erreur_sur"}} {{.NbLignes}}</strong>
+    — {{t "import.commun.aucune_ecriture"}}</p>
+  <ul style="margin:0; padding-left:18px;">
+    {{range .Erreurs}}<li>{{t "import.commun.ligne"}} {{.Ligne}} : {{.Message}}</li>{{end}}
+  </ul>
+</div>
+{{else if .Ecrit}}
+{{template "import_etapes" "ecrit"}}
+<p class="message-succes">
+  {{t "import.commun.import_effectue"}} {{.NbVlans}} VLAN {{t "import.commun.et"}} {{.NbPlages}} {{t "import.vlans.plages_creees"}}
+  <a href="/vlans">{{t "import.vlans.lien_voir_catalogue"}}</a>.
+</p>
+{{else}}
+{{template "import_etapes" "pret"}}
+<div class="carte">
+  <p style="margin:0 0 12px;" class="message-succes">
+    {{.NbLignes}} {{t "import.commun.lignes_valides"}} — {{.NbVlans}} VLAN {{t "import.commun.et"}} {{.NbPlages}} {{t "import.vlans.plages_pretes"}} {{t "import.commun.rien_ecrit"}}
+  </p>
+  <form hx-post="/import/vlans/confirmer" hx-target="#resultat-import-vlans" hx-swap="innerHTML">
+    <input type="hidden" name="jeton" value="{{.Jeton}}">
+    <button type="submit">{{t "import.commun.confirmer_import"}}</button>
+  </form>
+</div>
+{{end}}
+{{end}}

@@ -1,0 +1,75 @@
+{{/*
+Écran Métriques (v1.5) — variante du patron projets sans drapeau d'activité
+(voir templates/projets/liste.html pour les conventions détaillées, et
+templates/environnements/liste.html pour le patron sans activité déjà
+appliqué). Champs : Code, Libellé, Unité — tous obligatoires
+(depot.CreerMetrique). Le code est immuable une fois créé (ModifierMetrique
+ne le touche pas) : le champ reste visible mais en lecture seule à l'édition.
+*/}}
+
+{{define "metriques_page"}}
+<h1>{{t "metriques.titre"}}</h1>
+<p class="sous-titre">{{t "metriques.sous_titre"}}</p>
+
+<form class="carte" style="margin-bottom:18px" hx-post="/metriques"
+      hx-target="#tableau-metriques" hx-swap="outerHTML">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:1; min-width:140px; margin:0;">{{t "commun.code"}}
+      <input type="text" name="code" required maxlength="60" placeholder="DISQUE_UTILE_TO">
+    </label>
+    <label style="flex:2; min-width:200px; margin:0;">{{t "commun.libelle"}}
+      <input type="text" name="libelle" required maxlength="200" placeholder="Disque utile">
+    </label>
+    <label style="flex:1; min-width:100px; margin:0;">{{t "simulation.unite"}}
+      <input type="text" name="unite" required maxlength="40" placeholder="To">
+    </label>
+    <button type="submit">{{t "commun.ajouter"}}</button>
+  </div>
+</form>
+
+{{template "metriques_tableau" .}}
+{{end}}
+
+{{define "metriques_tableau"}}
+<div id="tableau-metriques">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr><th>{{t "commun.code"}}</th><th>{{t "commun.libelle"}}</th><th>{{t "simulation.unite"}}</th><th></th></tr></thead>
+  <tbody>
+    {{range .Metriques}}{{template "metriques_ligne" .}}{{else}}
+    <tr><td colspan="4" class="vide">{{t "metriques.aucun"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "metriques_ligne"}}
+<tr id="metrique-{{.ID}}">
+  <td>{{.Code}}</td>
+  <td>{{.Libelle}}{{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}</td>
+  <td>{{.Unite}}</td>
+  <td class="actions-ligne">
+    <button class="bouton-discret bouton-petit"
+            hx-get="/metriques/{{.ID}}/editer" hx-target="#metrique-{{.ID}}" hx-swap="outerHTML">{{t "commun.modifier"}}</button>
+  </td>
+</tr>
+{{end}}
+
+{{define "metriques_ligne_edition"}}
+<tr id="metrique-{{.ID}}">
+  <td><input type="text" name="code" value="{{.Code}}" readonly></td>
+  <td>
+    <input type="text" name="libelle" value="{{.Libelle}}" required maxlength="200">
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td><input type="text" name="unite" value="{{.Unite}}" required maxlength="40"></td>
+  <td class="actions-ligne">
+    <button class="bouton-petit"
+            hx-put="/metriques/{{.ID}}" hx-include="closest tr" hx-target="#metrique-{{.ID}}" hx-swap="outerHTML">{{t "commun.enregistrer"}}</button>
+    <button type="button" class="bouton-discret bouton-petit"
+            hx-get="/metriques/{{.ID}}" hx-target="#metrique-{{.ID}}" hx-swap="outerHTML">{{t "commun.annuler"}}</button>
+  </td>
+</tr>
+{{end}}

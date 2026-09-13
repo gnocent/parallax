@@ -1,0 +1,158 @@
+{{/*
+Écran Licences (v3.3) — contrats de licence par techno et par année,
+surchargeables par scénario. Patron de projets/liste.html (lire son
+commentaire de tête d'abord), avec un sélecteur de scénario comme la page
+de détail d'une variable : la liste montre le réel et les surcharges du
+scénario choisi ensemble (badge « scénario »), un contrat nouveau s'écrit
+dans le scénario choisi (champ caché "scenario"), un contrat existant reste
+dans son seau.
+
+  - "licences_page"           page complète (sélecteur, formulaire d'ajout,
+                                tableau)
+  - "licences_tableau"        le <table id="tableau-licences">, renvoyé en
+                                entier par la création et la suppression ;
+                                porte les boutons d'export (visent la page
+                                avec le scénario courant)
+  - "licences_ligne"          une ligne en lecture
+  - "licences_ligne_edition"  la même ligne en édition — hx-include="closest tr"
+
+Contexte Go (handlers_licence.go) :
+  Lignes      []licenceLigne  — réel, plus les surcharges du scénario choisi,
+                                 triés par techno, année, réel avant scénario
+  ScenarioID  int64           — 0 = réel
+  Scenarios, Technos, Mecanismes, Niveaux, Export, Erreur
+*/}}
+
+{{define "licences_page"}}
+<h1>{{t "licences.titre"}}</h1>
+<p class="sous-titre">
+  {{t "licences.sous_titre"}}
+</p>
+
+<form method="get" class="filtres" style="margin-bottom:14px;">
+  <label style="margin:0; display:flex; align-items:center; gap:6px;">
+    {{t "simulation.scenario"}}
+    <select name="scenario" onchange="this.form.submit()">
+      <option value="0" {{if not .ScenarioID}}selected{{end}}>{{t "simulation.reel"}}</option>
+      {{range .Scenarios}}<option value="{{.ID}}" {{if eq .ID $.ScenarioID}}selected{{end}}>{{.Nom}}</option>{{end}}
+    </select>
+  </label>
+</form>
+
+<form class="carte" style="margin-bottom:18px" hx-post="/licences"
+      hx-target="#tableau-licences" hx-swap="outerHTML">
+  <h2 style="margin-top:0">{{t "licences.nouveau_contrat"}}{{if .ScenarioID}} {{t "simulation.dans_scenario_choisi"}}{{end}}</h2>
+  <input type="hidden" name="scenario" value="{{.ScenarioID}}">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:1; min-width:160px; margin:0;">{{t "simulation.champ_techno"}}
+      <select name="techno_id" required>
+        <option value="">—</option>
+        {{range .Technos}}<option value="{{.ID}}">{{.Code}} — {{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:0 0 100px; margin:0;">{{t "simulation.champ_annee"}}
+      <input type="number" name="annee" required min="2000" max="2100" step="1">
+    </label>
+    <label style="flex:1; min-width:180px; margin:0;">{{t "licences.mecanisme"}}
+      <select name="mecanisme" required>
+        {{range .Mecanismes}}<option value="{{.Code}}" title="{{t (printf "licence.aide.mecanisme.%s" .Code)}}">{{.Code}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:140px; margin:0;">{{t "licences.niveau"}}
+      <select name="niveau" required>
+        {{range .Niveaux}}<option value="{{.Code}}" title="{{t (printf "licence.aide.niveau.%s" .Code)}}">{{.Code}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:0 0 130px; margin:0;">{{t "licences.ram_max"}}
+      <input type="number" name="ram_max_go" step="any" min="0" placeholder="sauf NOEUDS">
+    </label>
+    <label style="flex:0 0 140px; margin:0;">{{t "licences.cout_unitaire"}}
+      <input type="number" name="cout_unitaire_ht" step="any" min="0">
+    </label>
+    <label style="flex:2; min-width:180px; margin:0;">{{t "simulation.champ_commentaire"}}
+      <input type="text" name="commentaire" maxlength="500">
+    </label>
+    <button type="submit">{{t "commun.ajouter"}}</button>
+  </div>
+  <small style="display:block; margin-top:8px; color:var(--texte-discret);">
+    {{t "licences.aide_mecanismes"}}
+  </small>
+</form>
+
+{{template "licences_tableau" .}}
+{{end}}
+
+{{define "licences_tableau"}}
+<div id="tableau-licences">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr>
+    <th>{{t "simulation.champ_techno"}}</th><th>{{t "simulation.champ_annee"}}</th><th>{{t "licences.mecanisme"}}</th><th>{{t "licences.niveau"}}</th>
+    <th>{{t "licences.ram_max"}}</th><th>{{t "licences.cout_unitaire"}}</th><th>{{t "simulation.champ_commentaire"}}</th><th></th><th></th>
+  </tr></thead>
+  <tbody>
+    {{range .Lignes}}{{template "licences_ligne" .}}{{else}}
+    <tr><td colspan="9" class="vide">{{t "licences.aucun"}}{{if .ScenarioID}} {{t "licences.reel_ou_scenario"}}{{end}}.</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "licences_ligne"}}
+<tr id="licence-{{.ID}}">
+  <td title="{{.TechnoLibelle}}">{{.TechnoCode}}{{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}</td>
+  <td>{{.Annee}}</td>
+  <td>{{.Mecanisme}}</td>
+  <td>{{.Niveau}}</td>
+  <td>{{if .RamMaxTexte}}{{.RamMaxTexte}}{{else}}—{{end}}</td>
+  <td>{{if .CoutTexte}}{{.CoutTexte}}{{else}}—{{end}}</td>
+  <td>{{videSiNil .Commentaire}}</td>
+  <td>{{if .EstDuScenario}}<span class="badge">{{t "simulation.badge_scenario"}}</span>{{else}}<span class="badge badge-actif">{{t "simulation.badge_reel"}}</span>{{end}}</td>
+  <td class="actions-ligne">
+    <button class="bouton-discret bouton-petit"
+            hx-get="/licences/{{.ID}}/editer" hx-target="#licence-{{.ID}}" hx-swap="outerHTML">{{t "commun.modifier"}}</button>
+    <button class="bouton-discret bouton-petit"
+            hx-post="/licences/{{.ID}}/supprimer?scenario={{.ScenarioIDTexte}}"
+            hx-target="#tableau-licences" hx-swap="outerHTML"
+            hx-confirm="{{t "licences.supprimer_confirmer"}}">{{t "commun.supprimer"}}</button>
+  </td>
+</tr>
+{{end}}
+
+{{define "licences_ligne_edition"}}
+<tr id="licence-{{.ID}}">
+  <td>
+    <select name="techno_id" required>
+      {{range .Technos}}<option value="{{.ID}}" {{if eq .ID $.TechnoID}}selected{{end}}>{{.Code}}</option>{{end}}
+    </select>
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td><input type="number" name="annee" value="{{.Annee}}" required min="2000" max="2100" step="1" style="width:90px"></td>
+  <td>
+    <select name="mecanisme" required>
+      <option value="NOEUDS" {{if eq .Mecanisme "NOEUDS"}}selected{{end}}>NOEUDS</option>
+      <option value="MAX_NOEUDS_RAM" {{if eq .Mecanisme "MAX_NOEUDS_RAM"}}selected{{end}}>MAX_NOEUDS_RAM</option>
+      <option value="RAM" {{if eq .Mecanisme "RAM"}}selected{{end}}>RAM</option>
+    </select>
+  </td>
+  <td>
+    <select name="niveau" required>
+      <option value="MACHINE" {{if eq .Niveau "MACHINE"}}selected{{end}}>MACHINE</option>
+      <option value="CLUSTER" {{if eq .Niveau "CLUSTER"}}selected{{end}}>CLUSTER</option>
+      <option value="GLOBAL" {{if eq .Niveau "GLOBAL"}}selected{{end}}>GLOBAL</option>
+    </select>
+  </td>
+  <td><input type="number" name="ram_max_go" value="{{.RamMaxTexte}}" step="any" min="0" style="width:100px"></td>
+  <td><input type="number" name="cout_unitaire_ht" value="{{.CoutTexte}}" step="any" min="0" style="width:110px"></td>
+  <td><input type="text" name="commentaire" value="{{videSiNil .Commentaire}}" maxlength="500"></td>
+  <td>{{if .EstDuScenario}}<span class="badge">{{t "simulation.badge_scenario"}}</span>{{else}}<span class="badge badge-actif">{{t "simulation.badge_reel"}}</span>{{end}}</td>
+  <td class="actions-ligne">
+    <button class="bouton-petit"
+            hx-put="/licences/{{.ID}}" hx-include="closest tr" hx-target="#licence-{{.ID}}" hx-swap="outerHTML">{{t "commun.enregistrer"}}</button>
+    <button type="button" class="bouton-discret bouton-petit"
+            hx-get="/licences/{{.ID}}" hx-target="#licence-{{.ID}}" hx-swap="outerHTML">{{t "commun.annuler"}}</button>
+  </td>
+</tr>
+{{end}}

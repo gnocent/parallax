@@ -1,0 +1,40 @@
+{{/*
+Page des anomalies réseau (backlog v3.1) : calculées à la lecture, jamais
+bloquantes. Contexte : Anomalies []ligneAnomalie, Comptes []compteType
+(un par type, dans l'ordre fixe, y compris à zéro), Total, Export.
+*/}}
+
+{{define "adressage_anomalies_page"}}
+<h1>{{t "nav.anomalies"}}</h1>
+<p class="sous-titre">
+  {{t "adressage.anomalies.sous_titre"}} <a href="/vlans">{{t "adressage.anomalies.lien_vlan"}}</a>.
+</p>
+
+<div class="carte" style="margin-bottom:18px; display:flex; gap:18px; flex-wrap:wrap; align-items:baseline;">
+  <div><strong style="font-size:1.4em;">{{.Total}}</strong> {{t "adressage.anomalies.compte_suffixe"}}</div>
+  {{range .Comptes}}
+  <div title="{{.Type}}">
+    <strong>{{.Nb}}</strong>
+    {{if .Nb}}<span class="badge badge-inactif">{{.Libelle}}</span>{{else}}<span class="vide">{{.Libelle}}</span>{{end}}
+  </div>
+  {{end}}
+</div>
+
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr><th>{{t "adressage.anomalies.champ_serveur"}}</th><th>{{t "adressage.anomalies.champ_adresse"}}</th><th>{{t "adressage.anomalies.champ_vlan"}}</th><th>{{t "adressage.anomalies.champ_type"}}</th><th>{{t "adressage.anomalies.champ_detail"}}</th></tr></thead>
+  <tbody>
+    {{range .Anomalies}}
+    <tr>
+      <td><a href="/serveurs/{{.ServeurID}}">{{if .PhysicalName}}{{.PhysicalName}}{{else}}{{t "adressage.anomalies.champ_serveur"}} #{{.ServeurID}}{{end}}</a></td>
+      <td><code>{{.IP}}</code></td>
+      <td>{{.VlanCode}}</td>
+      <td><span class="badge badge-inactif" title="{{.Type}}">{{.Libelle}}</span></td>
+      <td>{{.Detail}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="5" class="vide">{{t "adressage.anomalies.aucune"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

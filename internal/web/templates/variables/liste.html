@@ -1,0 +1,71 @@
+{{/*
+Écran Variables (v1.5) — variante du patron projets sans drapeau d'activité
+(voir templates/projets/liste.html), et sans bascule lecture/édition dans la
+liste : la gestion des valeurs par portée, le vrai cœur de l'écran, vit sur la
+page de détail (/variables/{id}, voir templates/variables/detail.html), qui
+porte aussi le formulaire de la déclaration — même principe que les modèles
+(templates/modeles/liste.html et detail.html). "Détail" est donc un lien
+classique (<a href>, pas htmx).
+*/}}
+
+{{define "variables_page"}}
+<h1>{{t "variables.titre"}}</h1>
+<p class="sous-titre">{{t "variables.sous_titre"}}</p>
+
+<form class="carte" style="margin-bottom:18px" hx-post="/variables"
+      hx-target="#tableau-variables" hx-swap="outerHTML">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:1; min-width:160px; margin:0;">{{t "commun.code"}}
+      <input type="text" name="code" required maxlength="80" placeholder="debit_jour_to">
+    </label>
+    <label style="flex:2; min-width:200px; margin:0;">{{t "commun.libelle"}}
+      <input type="text" name="libelle" required maxlength="200" placeholder="Débit journalier entrant">
+    </label>
+    <label style="flex:0 0 90px; margin:0;">{{t "simulation.unite"}}
+      <input type="text" name="unite" maxlength="40" placeholder="To/j">
+    </label>
+    <label style="flex:0 0 110px; margin:0;">{{t "variables.defaut"}}
+      <input type="number" name="defaut" step="any">
+    </label>
+    <label style="flex:2; min-width:180px; margin:0;">{{t "simulation.champ_commentaire"}}
+      <input type="text" name="commentaire" maxlength="500">
+    </label>
+    <button type="submit">{{t "commun.ajouter"}}</button>
+  </div>
+</form>
+
+{{template "variables_tableau" .}}
+{{end}}
+
+{{define "variables_tableau"}}
+<div id="tableau-variables">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr>
+    <th>{{t "commun.code"}}</th><th>{{t "commun.libelle"}}</th><th>{{t "simulation.unite"}}</th><th>{{t "variables.defaut"}}</th><th>{{t "simulation.champ_commentaire"}}</th><th></th>
+  </tr></thead>
+  <tbody>
+    {{range .Variables}}{{template "variables_ligne" .}}{{else}}
+    <tr><td colspan="6" class="vide">{{t "variables.aucun"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "variables_ligne"}}
+<tr id="variable-{{.ID}}">
+  <td>
+    <a href="/variables/{{.ID}}">{{.Code}}</a>
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td>{{.Libelle}}</td>
+  <td>{{videSiNil .Unite}}</td>
+  <td>{{.DefautTexte}}</td>
+  <td>{{videSiNil .Commentaire}}</td>
+  <td class="actions-ligne">
+    <a class="bouton-discret bouton-petit" href="/variables/{{.ID}}">{{t "simulation.detail"}}</a>
+  </td>
+</tr>
+{{end}}

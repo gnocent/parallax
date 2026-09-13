@@ -1,0 +1,110 @@
+{{/*
+Journal des modifications (backlog v3.4).
+
+  - "journal_page"        page globale, administrateurs : filtres, tableau,
+                           purge à la demande, export universel
+  - "journal_historique"  fragment chargé en htmx par une fiche :
+                           <div hx-get="/journal/historique/<entite>/<id>" hx-trigger="load">
+
+Le JSON avant/après est montré brut dans un <details> : c'est une aide à la
+compréhension d'une erreur rare, pas un écran de tous les jours, et un
+format lisible sans outil vaut mieux qu'une mise en forme qui cacherait un
+champ.
+*/}}
+
+{{define "journal_page"}}
+<h1>{{t "journal.titre"}}</h1>
+<p class="sous-titre">
+  {{t "journal.sous_titre_1"}} {{.RetentionJours}} {{t "journal.sous_titre_2"}}
+</p>
+
+{{if .Message}}<p class="message-succes">{{.Message}}</p>{{end}}
+
+<form method="get" class="carte" style="margin-bottom:14px; display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+  <label style="margin:0;">{{t "journal.label_entite"}}
+    <select name="entite">
+      <option value="">{{t "journal.toutes"}}</option>
+      {{range .Entites}}<option value="{{.}}" {{if eq . $.Filtre.Entite}}selected{{end}}>{{.}}</option>{{end}}
+    </select>
+  </label>
+  <label style="margin:0;">{{t "journal.label_action"}}
+    <select name="action">
+      <option value="">{{t "journal.toutes"}}</option>
+      {{range .Actions}}<option value="{{.}}" {{if eq . $.Filtre.Action}}selected{{end}}>{{.}}</option>{{end}}
+    </select>
+  </label>
+  <label style="margin:0;">{{t "journal.label_auteur"}}
+    <select name="utilisateur">
+      <option value="">{{t "journal.tous"}}</option>
+      {{range .Utilisateurs}}<option value="{{.ID}}" {{if eq .ID $.UtilisateurFiltreID}}selected{{end}}>{{.Login}}</option>{{end}}
+    </select>
+  </label>
+  <label style="margin:0;">{{t "journal.label_du"}}
+    <input type="date" name="depuis" value="{{.Filtre.Depuis}}" style="margin:0;">
+  </label>
+  <label style="margin:0;">{{t "journal.label_au"}}
+    <input type="date" name="jusqua" value="{{.Filtre.Jusqua}}" style="margin:0;">
+  </label>
+  <button type="submit">{{t "journal.filtrer"}}</button>
+  <span style="flex:1"></span>
+  {{template "export_boutons" .Export}}
+</form>
+
+<table>
+  <thead><tr><th>{{t "journal.table_horodatage"}}</th><th>{{t "journal.label_auteur"}}</th><th>{{t "journal.label_entite"}}</th><th>{{t "journal.label_action"}}</th><th>{{t "journal.table_detail"}}</th></tr></thead>
+  <tbody>
+    {{range .Entrees}}
+    <tr>
+      <td style="white-space:nowrap">{{.Horodatage}}</td>
+      <td>{{.Auteur}}</td>
+      <td>{{.Entite}} #{{.EntiteID}}</td>
+      <td><span class="badge">{{.Action}}</span></td>
+      <td>
+        <details>
+          <summary style="cursor:pointer">{{t "journal.avant_apres"}}</summary>
+          {{if .Avant}}<div style="font-size:11px; color:var(--texte-discret)">{{t "journal.avant"}}</div><pre style="white-space:pre-wrap; margin:0 0 6px;">{{.Avant}}</pre>{{end}}
+          {{if .Apres}}<div style="font-size:11px; color:var(--texte-discret)">{{t "journal.apres"}}</div><pre style="white-space:pre-wrap; margin:0;">{{.Apres}}</pre>{{end}}
+        </details>
+      </td>
+    </tr>
+    {{else}}
+    <tr><td colspan="5" class="vide">{{t "journal.aucune_entree"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+
+<form method="post" action="/journal/purger" style="margin-top:16px;"
+      onsubmit="return confirm('{{t "journal.confirmer_purge_1"}} {{.RetentionJours}} {{t "journal.confirmer_purge_2"}}')">
+  <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+  <button type="submit" class="bouton-discret">{{t "journal.purger_maintenant"}}</button>
+</form>
+{{end}}
+
+{{define "journal_historique"}}
+<div id="historique-{{.Entite}}-{{.EntiteID}}">
+<h3 style="margin:16px 0 8px">{{t "journal.historique_titre"}}</h3>
+{{if .Entrees}}
+<table>
+  <thead><tr><th>{{t "journal.table_horodatage"}}</th><th>{{t "journal.label_auteur"}}</th><th>{{t "journal.label_action"}}</th><th>{{t "journal.table_detail"}}</th></tr></thead>
+  <tbody>
+    {{range .Entrees}}
+    <tr>
+      <td style="white-space:nowrap">{{.Horodatage}}</td>
+      <td>{{.Auteur}}</td>
+      <td><span class="badge">{{.Action}}</span></td>
+      <td>
+        <details>
+          <summary style="cursor:pointer">{{t "journal.avant_apres"}}</summary>
+          {{if .Avant}}<div style="font-size:11px; color:var(--texte-discret)">{{t "journal.avant"}}</div><pre style="white-space:pre-wrap; margin:0 0 6px;">{{.Avant}}</pre>{{end}}
+          {{if .Apres}}<div style="font-size:11px; color:var(--texte-discret)">{{t "journal.apres"}}</div><pre style="white-space:pre-wrap; margin:0;">{{.Apres}}</pre>{{end}}
+        </details>
+      </td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+{{else}}
+<p class="vide">{{t "journal.aucune_modification"}}</p>
+{{end}}
+</div>
+{{end}}

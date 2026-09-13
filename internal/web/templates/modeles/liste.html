@@ -1,0 +1,89 @@
+{{/*
+Écran Modèles (/modeles) — variante du patron projets (voir
+templates/projets/liste.html pour les conventions détaillées), avec
+Archiver/Réactiver comme technos puisque modele.actif existe. La fiche
+complète (financement, coûts, révisions) vit sur la page de détail
+(/modeles/{id}, voir templates/modeles/detail.html) : la création ici ne
+porte que type, année, code et mode de financement.
+
+Pas de bascule lecture/édition dans cette liste : l'action "Détail" est un
+lien classique (<a href>, pas htmx) vers la page de détail, seul endroit où
+les champs financiers se modifient.
+*/}}
+
+{{define "modeles_page"}}
+<h1>{{t "nav.modeles"}}</h1>
+<p class="sous-titre">{{t "modeles.sous_titre"}}</p>
+
+<form class="carte" style="margin-bottom:18px" hx-post="/modeles"
+      hx-target="#tableau-modeles" hx-swap="outerHTML"
+      hx-include="[name='inclure_inactifs']">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:1; min-width:130px; margin:0;">{{t "modeles.champ_type"}}
+      <input type="text" name="type" required maxlength="80" placeholder="DENSE">
+    </label>
+    <label style="flex:0 0 100px; margin:0;">{{t "modeles.champ_annee"}}
+      <input type="number" name="annee" required min="2001" step="1" placeholder="2025">
+    </label>
+    <label style="flex:1; min-width:150px; margin:0;">{{t "commun.code"}}
+      <input type="text" name="code" required maxlength="80" placeholder="DENSE-2025">
+    </label>
+    <label style="flex:1; min-width:140px; margin:0;">{{t "modeles.champ_financement"}}
+      <select name="mode_financement">
+        <option value="">—</option>
+        <option value="ACHAT">{{t "modeles.financement_achat"}}</option>
+        <option value="LEASE">{{t "modeles.financement_lease"}}</option>
+      </select>
+    </label>
+    <button type="submit">{{t "commun.ajouter"}}</button>
+  </div>
+</form>
+
+<div class="barre-outils">
+  <label style="margin:0; display:flex; align-items:center; gap:6px;">
+    <input type="checkbox" name="inclure_inactifs"
+           hx-get="/modeles/tableau" hx-target="#tableau-modeles" hx-swap="outerHTML">
+    {{t "modeles.inclure_archives"}}
+  </label>
+</div>
+
+{{template "modeles_tableau" .}}
+{{end}}
+
+{{define "modeles_tableau"}}
+<div id="tableau-modeles">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr><th>{{t "commun.code"}}</th><th>{{t "modeles.champ_type"}}</th><th>{{t "modeles.champ_annee"}}</th><th>{{t "modeles.champ_financement"}}</th><th>{{t "commun.statut"}}</th><th></th></tr></thead>
+  <tbody>
+    {{range .Modeles}}{{template "modeles_ligne" .}}{{else}}
+    <tr><td colspan="6" class="vide">{{t "modeles.aucun"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "modeles_ligne"}}
+<tr id="modele-{{.ID}}" class="{{if not .Actif}}inactif{{end}}">
+  <td>
+    <a href="/modeles/{{.ID}}">{{.Code}}</a>
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td>{{.Type}}</td>
+  <td>{{.Annee}}</td>
+  <td>{{videSiNil .ModeFinancement}}</td>
+  <td>{{if .Actif}}<span class="badge badge-actif">{{t "commun.actif"}}</span>{{else}}<span class="badge badge-inactif">{{t "commun.archive"}}</span>{{end}}</td>
+  <td class="actions-ligne">
+    <a class="bouton-discret bouton-petit" href="/modeles/{{.ID}}">{{t "modeles.detail"}}</a>
+    {{if .Actif}}
+    <button class="bouton-discret bouton-petit"
+            hx-post="/modeles/{{.ID}}/archiver" hx-target="#modele-{{.ID}}" hx-swap="outerHTML">{{t "commun.archiver"}}</button>
+    {{else}}
+    <button class="bouton-discret bouton-petit"
+            hx-post="/modeles/{{.ID}}/reactiver" hx-target="#modele-{{.ID}}" hx-swap="outerHTML">{{t "commun.reactiver"}}</button>
+    {{end}}
+  </td>
+</tr>
+{{end}}

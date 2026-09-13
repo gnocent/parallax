@@ -1,0 +1,116 @@
+{{define "utilisateurs_page"}}
+<h1>{{t "nav.comptes"}}</h1>
+<p class="sous-titre">{{t "utilisateurs.sous_titre"}}</p>
+
+<form class="carte" style="margin-bottom:18px" hx-post="/utilisateurs"
+      hx-target="#tableau-utilisateurs" hx-swap="outerHTML"
+      hx-include="[name='inclure_inactifs']">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:1; min-width:120px; margin:0;">{{t "connexion.identifiant"}}
+      <input type="text" name="login" required maxlength="60">
+    </label>
+    <label style="flex:1; min-width:140px; margin:0;">{{t "utilisateurs.label_nom"}}
+      <input type="text" name="nom" maxlength="200">
+    </label>
+    <label style="min-width:120px; margin:0;">{{t "utilisateurs.label_role"}}
+      <select name="role">{{range .Roles}}<option value="{{.}}">{{.}}</option>{{end}}</select>
+    </label>
+    <label style="flex:1; min-width:160px; margin:0;">{{t "utilisateurs.label_mdp_initial"}}
+      <input type="password" name="mot_de_passe" required minlength="8">
+    </label>
+    <button type="submit">{{t "utilisateurs.creer"}}</button>
+  </div>
+</form>
+
+<div class="barre-outils">
+  <label style="margin:0; display:flex; align-items:center; gap:6px;">
+    <input type="checkbox" name="inclure_inactifs"
+           hx-get="/utilisateurs/tableau" hx-target="#tableau-utilisateurs" hx-swap="outerHTML">
+    {{t "utilisateurs.inclure_desactives"}}
+  </label>
+</div>
+
+{{template "utilisateurs_tableau" .}}
+{{end}}
+
+{{define "utilisateurs_tableau"}}
+<div id="tableau-utilisateurs">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr><th>{{t "connexion.identifiant"}}</th><th>{{t "utilisateurs.label_nom"}}</th><th>{{t "utilisateurs.label_role"}}</th><th>{{t "commun.statut"}}</th><th>{{t "utilisateurs.label_origine"}}</th><th></th></tr></thead>
+  <tbody>
+    {{range .Utilisateurs}}{{template "utilisateurs_ligne" .}}{{else}}
+    <tr><td colspan="6" class="vide">{{t "utilisateurs.aucun_compte"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "utilisateurs_ligne"}}
+<tr id="utilisateur-{{.ID}}" class="{{if not .Actif}}inactif{{end}}">
+  <td>{{.Login}}</td>
+  <td>{{videSiNil .Nom}}{{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}</td>
+  <td>{{.Role}}</td>
+  <td>{{if .Actif}}<span class="badge badge-actif">{{t "commun.actif"}}</span>{{else}}<span class="badge badge-inactif">{{t "utilisateurs.desactive"}}</span>{{end}}</td>
+  <td>{{if eq .Origine "LDAP"}}<span class="badge" title="{{t "utilisateurs.ldap_title"}}">LDAP</span>{{else}}{{t "utilisateurs.local"}}{{end}}</td>
+  <td class="actions-ligne">
+    <button class="bouton-discret bouton-petit"
+            hx-get="/utilisateurs/{{.ID}}/editer" hx-target="#utilisateur-{{.ID}}" hx-swap="outerHTML">{{t "commun.modifier"}}</button>
+    {{if ne .Origine "LDAP"}}
+    <button class="bouton-discret bouton-petit"
+            hx-get="/utilisateurs/{{.ID}}/mot-de-passe" hx-target="#utilisateur-{{.ID}}" hx-swap="outerHTML">{{t "utilisateurs.bouton_mot_de_passe"}}</button>
+    {{end}}
+    {{if .Actif}}
+    <button class="bouton-discret bouton-petit"
+            hx-post="/utilisateurs/{{.ID}}/archiver" hx-target="#utilisateur-{{.ID}}" hx-swap="outerHTML">{{t "utilisateurs.desactiver"}}</button>
+    {{else}}
+    <button class="bouton-discret bouton-petit"
+            hx-post="/utilisateurs/{{.ID}}/reactiver" hx-target="#utilisateur-{{.ID}}" hx-swap="outerHTML">{{t "commun.reactiver"}}</button>
+    {{end}}
+  </td>
+</tr>
+{{end}}
+
+{{define "utilisateurs_ligne_edition"}}
+<tr id="utilisateur-{{.U.ID}}">
+  <td>{{.U.Login}}</td>
+  <td>
+    <input type="text" name="nom" value="{{videSiNil .U.Nom}}" maxlength="200">
+    {{if .U.Erreur}}<div class="message-erreur">{{.U.Erreur}}</div>{{end}}
+  </td>
+  <td>
+    <select name="role">
+      {{$role := .U.Role}}
+      {{range .Roles}}<option value="{{.}}"{{if eq . $role}} selected{{end}}>{{.}}</option>{{end}}
+    </select>
+  </td>
+  <td>{{if .U.Actif}}<span class="badge badge-actif">{{t "commun.actif"}}</span>{{else}}<span class="badge badge-inactif">{{t "utilisateurs.desactive"}}</span>{{end}}</td>
+  <td>{{if eq .U.Origine "LDAP"}}LDAP{{else}}{{t "utilisateurs.local"}}{{end}}</td>
+  <td class="actions-ligne">
+    <button class="bouton-petit"
+            hx-put="/utilisateurs/{{.U.ID}}" hx-include="closest tr" hx-target="#utilisateur-{{.U.ID}}" hx-swap="outerHTML">{{t "commun.enregistrer"}}</button>
+    <button type="button" class="bouton-discret bouton-petit"
+            hx-get="/utilisateurs/{{.U.ID}}" hx-target="#utilisateur-{{.U.ID}}" hx-swap="outerHTML">{{t "commun.annuler"}}</button>
+  </td>
+</tr>
+{{end}}
+
+{{define "utilisateurs_ligne_mot_de_passe"}}
+<tr id="utilisateur-{{.ID}}">
+  <td>{{.Login}}</td>
+  <td colspan="2">
+    <input type="password" name="mot_de_passe" placeholder="Nouveau mot de passe" minlength="8">
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td>{{if .Actif}}<span class="badge badge-actif">{{t "commun.actif"}}</span>{{else}}<span class="badge badge-inactif">{{t "utilisateurs.desactive"}}</span>{{end}}</td>
+  <td>{{t "utilisateurs.local"}}</td>
+  <td class="actions-ligne">
+    <button class="bouton-petit"
+            hx-put="/utilisateurs/{{.ID}}/mot-de-passe" hx-include="closest tr" hx-target="#utilisateur-{{.ID}}" hx-swap="outerHTML">{{t "utilisateurs.reinitialiser"}}</button>
+    <button type="button" class="bouton-discret bouton-petit"
+            hx-get="/utilisateurs/{{.ID}}" hx-target="#utilisateur-{{.ID}}" hx-swap="outerHTML">{{t "commun.annuler"}}</button>
+  </td>
+</tr>
+{{end}}

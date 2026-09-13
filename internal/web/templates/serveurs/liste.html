@@ -1,0 +1,108 @@
+{{/*
+Écran serveurs (v1.3) : liste compacte. Le détail (attributs complets,
+rattachement de révision, affectation) vit sur /serveurs/{id}
+(serveurs/detail.html), atteint par un lien classique — pas htmx, comme
+demandé : cette page ne charge que ce dont un inventaire a besoin d'un coup
+d'œil.
+
+  - "serveurs_page"     page complète (formulaire de création minimal,
+                          filtres, tableau)
+  - "serveurs_tableau"  le <table id="tableau-serveurs">, rechargé par les
+                          filtres et renvoyé en entier par la création
+  - "serveurs_ligne"    une ligne (physical_name, hostname, zone,
+                          statut, lien Détail)
+
+Mêmes conventions que clusters/liste.html : les filtres portent des noms
+préfixés filtre_ pour ne pas entrer en collision avec les champs homonymes
+du formulaire de création.
+*/}}
+
+{{define "serveurs_page"}}
+<h1>{{t "nav.serveurs"}}</h1>
+<p class="sous-titre">{{t "serveurs.sous_titre"}}</p>
+
+<form class="carte" style="margin-bottom:18px" hx-post="/serveurs"
+      hx-target="#tableau-serveurs" hx-swap="outerHTML"
+      hx-include="#filtres-serveurs">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:1; min-width:160px; margin:0;">{{t "serveurs.champ_nom_physique"}}
+      <input type="text" name="physical_name" maxlength="200" placeholder="PHY00123">
+    </label>
+    <label style="flex:1; min-width:160px; margin:0;">{{t "serveurs.champ_hostname"}}
+      <input type="text" name="hostname" maxlength="200" placeholder="esh01">
+    </label>
+    <label style="flex:1; min-width:160px; margin:0;">{{t "serveurs.champ_zone"}}
+      <select name="zone_id">
+        <option value="">—</option>
+        {{range .Zones}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:160px; margin:0;">{{t "commun.statut"}}
+      <select name="statut" required>
+        {{range .StatutsCreation}}<option value="{{.}}">{{.}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:180px; margin:0;">{{t "serveurs.champ_scenario_hypothese"}}
+      <select name="scenario_id">
+        <option value="">— {{t "serveurs.option_reel"}} —</option>
+        {{range .Scenarios}}<option value="{{.ID}}">{{.Nom}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:2; min-width:200px; margin:0;">{{t "serveurs.champ_commentaire"}}
+      <input type="text" name="commentaire" maxlength="500">
+    </label>
+    <button type="submit">{{t "commun.ajouter"}}</button>
+  </div>
+</form>
+
+<div class="barre-outils">
+  <div id="filtres-serveurs" class="filtres">
+    <select name="filtre_statut"
+            hx-get="/serveurs/tableau" hx-target="#tableau-serveurs" hx-swap="outerHTML" hx-include="#filtres-serveurs">
+      <option value="">{{t "serveurs.filtre_tous_statuts"}}</option>
+      {{range .StatutsFiltre}}<option value="{{.}}">{{.}}</option>{{end}}
+    </select>
+    <select name="filtre_zone_id"
+            hx-get="/serveurs/tableau" hx-target="#tableau-serveurs" hx-swap="outerHTML" hx-include="#filtres-serveurs">
+      <option value="">{{t "serveurs.filtre_toutes_zones"}}</option>
+      {{range .Zones}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+    </select>
+    <select name="filtre_scenario_id"
+            hx-get="/serveurs/tableau" hx-target="#tableau-serveurs" hx-swap="outerHTML" hx-include="#filtres-serveurs">
+      <option value="">{{t "serveurs.filtre_reel_seulement"}}</option>
+      {{range .Scenarios}}<option value="{{.ID}}">+ {{t "serveurs.option_scenario"}} « {{.Nom}} »</option>{{end}}
+    </select>
+  </div>
+  <a class="bouton-discret" href="/serveurs/sans-affectation">{{t "serveurs.sans_affectation_titre"}}</a>
+  <a class="bouton-discret" href="/serveurs/export-maj" title="{{t "serveurs.lien_export_maj_titre"}}">{{t "serveurs.lien_export_maj"}}</a>
+</div>
+
+{{template "serveurs_tableau" .}}
+{{end}}
+
+{{define "serveurs_tableau"}}
+<div id="tableau-serveurs">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+{{/* export universel (v3.0) : dans le fragment, vers /serveurs?filtre_…, pour
+     que les liens reflètent les filtres après chaque rechargement */}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr><th>{{t "serveurs.champ_nom_physique"}}</th><th>{{t "serveurs.champ_hostname"}}</th><th>{{t "serveurs.champ_zone"}}</th><th>{{t "commun.statut"}}</th><th></th></tr></thead>
+  <tbody>
+    {{range .Serveurs}}{{template "serveurs_ligne" .}}{{else}}
+    <tr><td colspan="5" class="vide">{{t "serveurs.aucun"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "serveurs_ligne"}}
+<tr id="serveur-{{.ID}}">
+  <td>{{if .PhysicalName}}{{videSiNil .PhysicalName}}{{else}}—{{end}}{{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}</td>
+  <td>{{if .Hostname}}{{videSiNil .Hostname}}{{else}}—{{end}}</td>
+  <td>{{if .ZoneLibelle}}{{.ZoneLibelle}}{{else}}—{{end}}</td>
+  <td><span class="badge">{{.Statut}}</span>{{if .ScenarioID}} <span class="badge badge-actif">{{t "serveurs.option_scenario"}}</span>{{end}}{{if .Anomalies}} <span class="badge" style="background:#fbe9e7; color:#b3261e;" title="{{joindre .Anomalies ", "}}">{{t "serveurs.badge_reseau_prefixe"}} {{len .Anomalies}}</span>{{end}}</td>
+  <td class="actions-ligne"><a href="/serveurs/{{.ID}}">{{t "serveurs.detail"}}</a></td>
+</tr>
+{{end}}

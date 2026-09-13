@@ -1,0 +1,251 @@
+{{/*
+Détail d'une variable (/variables/{id}) : la déclaration en tête, en
+formulaire toujours visible (pas de bascule lecture/édition, même principe
+que modele_champs — voir templates/modeles/detail.html et son commentaire de
+tête), puis la gestion des valeurs par portée, le vrai cœur de l'écran.
+
+Depuis la v2.1, un sélecteur choisit le scénario consulté : la liste montre
+alors le réel *et* les surcharges de ce scénario ensemble (badge "scénario"
+sur les lignes qui en sont), pour comparer facilement. Une valeur nouvelle
+s'écrit dans le scénario choisi ; modifier une valeur existante réécrit
+toujours dans son propre seau (champ caché "scenario" de valeur_ligne_edition),
+quel que soit le scénario affiché au moment de l'édition.
+
+Fragments (voir handlers_variable.go pour le contexte Go de chacun) :
+  - "variable_page"          page complète
+  - "variable_champs"        formulaire de la déclaration (div id="variable-champs",
+                              cible de PUT /variables/{id})
+  - "variable_valeurs"       table des valeurs du réel, triées par année puis
+                              par spécificité de portée décroissante
+                              (div id="valeurs-variable-{VariableID}")
+  - "valeur_ligne", "valeur_ligne_edition"  une valeur, patron
+                              projets_ligne / projets_ligne_edition — la
+                              portée et l'année ne sont pas éditables en
+                              édition (identité de l'upsert DefinirValeur) :
+                              elles voyagent en champs cachés, seuls la valeur
+                              et le commentaire sont modifiables.
+  - "valeur_historique_page" petite page listant les écrasements successifs
+                              d'une valeur (navigation classique, pas htmx)
+*/}}
+
+{{define "variable_page"}}
+<p><a href="/variables">&larr; {{t "nav.variables"}}</a></p>
+<h1>{{.Variable.Code}}</h1>
+<p class="sous-titre">{{.Variable.Libelle}}</p>
+
+{{template "variable_champs" .Variable}}
+
+<h2>{{t "variables.valeurs_titre"}}</h2>
+<p class="sous-titre">
+  {{t "variables.resolution_aide"}}
+</p>
+
+<form method="get" class="filtres" style="margin-bottom:14px;">
+  <label style="margin:0; display:flex; align-items:center; gap:6px;">
+    {{t "simulation.scenario"}}
+    <select name="scenario" onchange="this.form.submit()">
+      <option value="0" {{if not .Valeurs.ScenarioID}}selected{{end}}>{{t "simulation.reel"}}</option>
+      {{range .Valeurs.Scenarios}}<option value="{{.ID}}" {{if eq .ID $.Valeurs.ScenarioID}}selected{{end}}>{{.Nom}}</option>{{end}}
+    </select>
+  </label>
+</form>
+
+{{template "variable_valeurs" .Valeurs}}
+
+<div class="carte" style="margin-top:18px">
+<h2 style="margin-top:0">{{t "variables.nouvelle_valeur"}}{{if .Valeurs.ScenarioID}} {{t "simulation.dans_scenario_choisi"}}{{end}}</h2>
+<form hx-post="/variables/{{.Valeurs.VariableID}}/valeurs"
+      hx-target="#valeurs-variable-{{.Valeurs.VariableID}}" hx-swap="outerHTML">
+  <input type="hidden" name="scenario" value="{{.Valeurs.ScenarioID}}">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:0 0 100px; margin:0;">{{t "simulation.champ_annee"}}
+      <input type="number" name="annee" required min="2000" max="2100" step="1">
+    </label>
+    <label style="flex:1; min-width:150px; margin:0;">{{t "simulation.champ_projet"}}
+      <select name="projet_id">
+        <option value="">—</option>
+        {{range .Referentiels.Projets}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:150px; margin:0;">{{t "simulation.champ_environnement"}}
+      <select name="environnement_id">
+        <option value="">—</option>
+        {{range .Referentiels.Environnements}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:150px; margin:0;">{{t "simulation.champ_techno"}}
+      <select name="techno_id">
+        <option value="">—</option>
+        {{range .Referentiels.Technos}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:130px; margin:0;">{{t "simulation.champ_tier"}}
+      <select name="tier_id">
+        <option value="">—</option>
+        {{range .Referentiels.Tiers}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:150px; margin:0;">{{t "simulation.champ_cluster"}}
+      <select name="cluster_id">
+        <option value="">—</option>
+        {{range .Referentiels.Clusters}}<option value="{{.ID}}">{{.Nom}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:0 0 110px; margin:0;">{{t "simulation.champ_valeur"}}
+      <input type="number" name="valeur" required step="any">
+    </label>
+    <label style="flex:2; min-width:180px; margin:0;">{{t "simulation.champ_commentaire"}}
+      <input type="text" name="commentaire" maxlength="500">
+    </label>
+    <button type="submit">{{t "commun.enregistrer"}}</button>
+  </div>
+</form>
+</div>
+{{end}}
+
+{{/* ---------------------------------------------------------- déclaration */}}
+
+{{define "variable_champs"}}
+<div class="carte" id="variable-champs" style="margin-bottom:18px">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<form hx-put="/variables/{{.ID}}" hx-target="#variable-champs" hx-swap="outerHTML">
+  <div style="display:grid; grid-template-columns:repeat(3, minmax(150px,1fr)); gap:12px;">
+    <label>{{t "commun.code"}}
+      <input type="text" name="code" value="{{.Code}}" readonly>
+    </label>
+    <label>{{t "commun.libelle"}}
+      <input type="text" name="libelle" value="{{.Libelle}}" required maxlength="200">
+    </label>
+    <label>{{t "simulation.unite"}}
+      <input type="text" name="unite" value="{{videSiNil .Unite}}" maxlength="40">
+    </label>
+    <label>{{t "variables.defaut"}}
+      <input type="number" name="defaut" value="{{.DefautTexte}}" step="any">
+    </label>
+    <label style="grid-column: 1 / -1;">{{t "simulation.champ_commentaire"}}
+      <input type="text" name="commentaire" value="{{videSiNil .Commentaire}}" maxlength="500">
+    </label>
+  </div>
+  <button type="submit" style="margin-top:12px">{{t "commun.enregistrer"}}</button>
+</form>
+</div>
+{{end}}
+
+{{/* ---------------------------------------------------------- valeurs */}}
+
+{{define "variable_valeurs"}}
+<div id="valeurs-variable-{{.VariableID}}">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+{{/* export universel (v3.0) : dans le fragment, vers /variables/{id}?scenario=…,
+     pour que les liens suivent le scénario affiché après chaque rechargement */}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr>
+    <th>{{t "simulation.champ_annee"}}</th><th>{{t "simulation.champ_projet"}}</th><th>{{t "simulation.champ_environnement"}}</th><th>{{t "simulation.champ_techno"}}</th><th>{{t "simulation.champ_tier"}}</th>
+    <th>{{t "simulation.champ_cluster"}}</th><th>{{t "simulation.champ_valeur"}}</th><th>{{t "simulation.champ_commentaire"}}</th><th></th><th></th>
+  </tr></thead>
+  <tbody>
+    {{range .Valeurs}}{{template "valeur_ligne" .}}{{else}}
+    <tr><td colspan="10" class="vide">{{t "variables.valeurs_aucune"}}{{if .ScenarioID}} {{t "simulation.ou_ce_scenario"}}{{end}}.</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "valeur_ligne"}}
+<tr id="valeur-{{.ID}}">
+  <td>{{.Annee}}{{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}</td>
+  <td>{{if .ProjetLibelle}}{{.ProjetLibelle}}{{else}}—{{end}}</td>
+  <td>{{if .EnvironnementLibelle}}{{.EnvironnementLibelle}}{{else}}—{{end}}</td>
+  <td>{{if .TechnoLibelle}}{{.TechnoLibelle}}{{else}}—{{end}}</td>
+  <td>{{if .TierLibelle}}{{.TierLibelle}}{{else}}—{{end}}</td>
+  <td>{{if .ClusterLibelle}}{{.ClusterLibelle}}{{else}}—{{end}}</td>
+  <td>{{formaterNombre .Valeur}}</td>
+  <td>{{videSiNil .Commentaire}}</td>
+  <td>{{if .EstDuScenario}}<span class="badge">{{t "simulation.badge_scenario"}}</span>{{else}}<span class="badge badge-actif">{{t "simulation.badge_reel"}}</span>{{end}}</td>
+  <td class="actions-ligne">
+    <button class="bouton-discret bouton-petit"
+            hx-get="/variables/{{.VariableID}}/valeurs/{{.ID}}/editer" hx-target="#valeur-{{.ID}}" hx-swap="outerHTML">{{t "commun.modifier"}}</button>
+    <button class="bouton-discret bouton-petit"
+            hx-post="/variables/{{.VariableID}}/valeurs/{{.ID}}/supprimer?scenario={{.ScenarioIDTexte}}"
+            hx-target="#valeurs-variable-{{.VariableID}}" hx-swap="outerHTML"
+            hx-confirm="{{t "variables.supprimer_confirmer"}}">{{t "commun.supprimer"}}</button>
+    <a class="bouton-discret bouton-petit" href="/variables/{{.VariableID}}/valeurs/{{.ID}}/historique">{{t "variables.historique"}}</a>
+  </td>
+</tr>
+{{end}}
+
+{{define "valeur_ligne_edition"}}
+<tr id="valeur-{{.ID}}">
+  <td>
+    {{.Annee}}
+    <input type="hidden" name="annee" value="{{.Annee}}">
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td>
+    {{if .ProjetLibelle}}{{.ProjetLibelle}}{{else}}—{{end}}
+    <input type="hidden" name="projet_id" value="{{.ProjetIDTexte}}">
+  </td>
+  <td>
+    {{if .EnvironnementLibelle}}{{.EnvironnementLibelle}}{{else}}—{{end}}
+    <input type="hidden" name="environnement_id" value="{{.EnvironnementIDTexte}}">
+  </td>
+  <td>
+    {{if .TechnoLibelle}}{{.TechnoLibelle}}{{else}}—{{end}}
+    <input type="hidden" name="techno_id" value="{{.TechnoIDTexte}}">
+  </td>
+  <td>
+    {{if .TierLibelle}}{{.TierLibelle}}{{else}}—{{end}}
+    <input type="hidden" name="tier_id" value="{{.TierIDTexte}}">
+  </td>
+  <td>
+    {{if .ClusterLibelle}}{{.ClusterLibelle}}{{else}}—{{end}}
+    <input type="hidden" name="cluster_id" value="{{.ClusterIDTexte}}">
+  </td>
+  <td><input type="number" name="valeur" value="{{.Valeur}}" required step="any" style="width:100px"></td>
+  <td><input type="text" name="commentaire" value="{{videSiNil .Commentaire}}" maxlength="500"></td>
+  <td>
+    {{if .EstDuScenario}}<span class="badge">{{t "simulation.badge_scenario"}}</span>{{else}}<span class="badge badge-actif">{{t "simulation.badge_reel"}}</span>{{end}}
+    <input type="hidden" name="scenario" value="{{.ScenarioIDTexte}}">
+  </td>
+  <td class="actions-ligne">
+    <button class="bouton-petit"
+            hx-post="/variables/{{.VariableID}}/valeurs" hx-include="closest tr"
+            hx-target="#valeurs-variable-{{.VariableID}}" hx-swap="outerHTML">{{t "commun.enregistrer"}}</button>
+    <button type="button" class="bouton-discret bouton-petit"
+            hx-get="/variables/{{.VariableID}}/valeurs/{{.ID}}" hx-target="#valeur-{{.ID}}" hx-swap="outerHTML">{{t "commun.annuler"}}</button>
+  </td>
+</tr>
+{{end}}
+
+{{/* ---------------------------------------------------------- historique */}}
+
+{{define "valeur_historique_page"}}
+<p><a href="/variables/{{.Variable.ID}}">&larr; {{.Variable.Code}}</a></p>
+<h1>{{t "variables.historique"}}</h1>
+<p class="sous-titre">
+  {{t "variables.historique_valeur_de"}} {{.Valeur.Annee}}
+  {{if .Valeur.ClusterLibelle}} — {{.Valeur.ClusterLibelle}}{{end}}
+  {{if .Valeur.TierLibelle}} — {{.Valeur.TierLibelle}}{{end}}
+  {{if .Valeur.TechnoLibelle}} — {{.Valeur.TechnoLibelle}}{{end}}
+  {{if .Valeur.EnvironnementLibelle}} — {{.Valeur.EnvironnementLibelle}}{{end}}
+  {{if .Valeur.ProjetLibelle}} — {{.Valeur.ProjetLibelle}}{{end}}
+  — {{t "variables.historique_valeur_actuelle"}} {{formaterNombre .Valeur.Valeur}}
+</p>
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr><th>{{t "variables.historique_horodatage"}}</th><th>{{t "variables.historique_ancienne"}}</th><th>{{t "variables.historique_nouvelle"}}</th></tr></thead>
+  <tbody>
+    {{range .Historique}}
+    <tr>
+      <td>{{.Horodatage}}</td>
+      <td>{{formaterNombre .Ancienne}}</td>
+      <td>{{formaterNombre .Nouvelle}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="3" class="vide">{{t "variables.historique_aucun"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

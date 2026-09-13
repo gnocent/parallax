@@ -1,0 +1,123 @@
+{{define "mise_en_page"}}
+<!doctype html>
+<html lang="{{.Lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Titre}} · Parallax</title>
+<link rel="stylesheet" href="/statique/style.css">
+<script src="/statique/htmx.min.js"></script>
+</head>
+<body{{if .CSRFToken}} hx-headers='{"X-CSRF-Token":"{{.CSRFToken}}"}'{{end}}>
+{{/* Bascule de langue : toujours visible, y compris sur l'écran de
+     connexion (hors du bloc {{if .Identite}} ci-dessous). Cookie posé par
+     GET /langue/{lang} (langue.go), aucune écriture métier — pas de jeton
+     CSRF nécessaire ici. */}}
+<div class="langue-bascule">
+  <a href="/langue/fr"{{if eq .Lang "fr"}} class="langue-active"{{end}}>FR</a>
+  <a href="/langue/en"{{if eq .Lang "en"}} class="langue-active"{{end}}>EN</a>
+</div>
+{{if .Identite}}
+<header class="entete">
+  <div class="entete-rangee1">
+    <a class="marque" href="/">
+      <span class="marque-glyphe">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
+      </span>
+      Parallax
+    </a>
+    <div class="compte">
+      <span class="role">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 2 3 5v5c0 4.2 3 7 7 8 4-1 7-3.8 7-8V5l-7-3Z"/></svg>
+        {{.Identite.Role}}
+      </span>
+      <span>{{.Identite.Login}}</span>
+      <form method="post" action="/deconnexion" class="en-ligne">
+        <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+        <button type="submit" class="bouton-discret">{{t "commun.deconnexion"}}</button>
+      </form>
+    </div>
+  </div>
+  <nav class="nav-principale">
+    <div class="groupe-nav groupe-ref">
+      <span class="groupe-icone"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 6h14M3 10h14M3 14h9"/></svg></span>
+      <div class="groupe-corps">
+        <span class="groupe-titre">{{t "nav.groupe.referentiels"}}</span>
+        <span>
+          <a href="/projets">{{t "nav.projets"}}</a>
+          <a href="/environnements">{{t "nav.environnements"}}</a>
+          <a href="/technos">{{t "nav.technos"}}</a>
+          <a href="/tiers">{{t "nav.tiers"}}</a>
+          <a href="/usages">{{t "nav.usages"}}</a>
+          <a href="/zones">{{t "nav.zones"}}</a>
+        </span>
+      </div>
+    </div>
+    <div class="groupe-nav groupe-cat">
+      <span class="groupe-icone"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="14" height="4" rx="1"/><rect x="3" y="10" width="14" height="6" rx="1"/></svg></span>
+      <div class="groupe-corps">
+        <span class="groupe-titre">{{t "nav.groupe.catalogue"}}</span>
+        <span><a href="/modeles">{{t "nav.modeles"}}</a></span>
+      </div>
+    </div>
+    <div class="groupe-nav groupe-inv">
+      <span class="groupe-icone"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/></svg></span>
+      <div class="groupe-corps">
+        <span class="groupe-titre">{{t "nav.groupe.inventaire"}}</span>
+        <span>
+          <a href="/clusters">{{t "nav.clusters"}}</a>
+          <a href="/serveurs">{{t "nav.serveurs"}}</a>
+          <a href="/vlans">{{t "nav.vlans"}}</a>
+          <a href="/adressage/anomalies">{{t "nav.anomalies"}}</a>
+        </span>
+      </div>
+    </div>
+    <div class="groupe-nav groupe-sim">
+      <span class="groupe-icone"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 15c3-8 5 4 8-4 2-5 4 1 6-4"/></svg></span>
+      <div class="groupe-corps">
+        <span class="groupe-titre">{{t "nav.groupe.simulation"}}</span>
+        <span><a href="/scenarios">{{t "nav.scenarios"}}</a><a href="/comparaison">{{t "nav.comparaison"}}</a></span>
+      </div>
+    </div>
+    <div class="groupe-nav groupe-for">
+      <span class="groupe-icone"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4 3 10l2 6M15 4l2 6-2 6M11 3 9 17"/></svg></span>
+      <div class="groupe-corps">
+        <span class="groupe-titre">{{t "nav.groupe.formules"}}</span>
+        <span>
+          <a href="/metriques">{{t "nav.metriques"}}</a>
+          <a href="/variables">{{t "nav.variables"}}</a>
+          <a href="/regles">{{t "nav.regles"}}</a>
+          <a href="/licences">{{t "nav.licences"}}</a>
+        </span>
+      </div>
+    </div>
+    <div class="groupe-nav groupe-exp">
+      <span class="groupe-icone"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 3v11M5 10l5 5 5-5M4 17h12"/></svg></span>
+      <div class="groupe-corps">
+        <span class="groupe-titre">{{t "nav.groupe.exploitation"}}</span>
+        <span><a href="/vues">{{t "nav.vues"}}</a><a href="/demandes">{{t "nav.demandes"}}</a><a href="/import">{{t "nav.import"}}</a></span>
+      </div>
+    </div>
+    {{if eq .Identite.Role "ADMIN"}}
+    <div class="groupe-nav groupe-adm">
+      <span class="groupe-icone"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="2.6"/><path d="M10 3v2.2M10 14.8V17M3 10h2.2M14.8 10H17M5.3 5.3l1.5 1.5M13.2 13.2l1.5 1.5M14.7 5.3l-1.5 1.5M6.8 13.2l-1.5 1.5"/></svg></span>
+      <div class="groupe-corps">
+        <span class="groupe-titre">{{t "nav.groupe.administration"}}</span>
+        <span>
+          <a href="/utilisateurs">{{t "nav.comptes"}}</a>
+          <a href="/parametres/gabarit">{{t "nav.gabarit_demandes"}}</a>
+          <a href="/parametres/sauvegarde">{{t "nav.sauvegarde"}}</a>
+          <a href="/journal">{{t "nav.journal"}}</a>
+        </span>
+      </div>
+    </div>
+    {{end}}
+  </nav>
+</header>
+{{end}}
+<main class="contenu">
+{{.Contenu}}
+</main>
+</body>
+</html>
+{{end}}

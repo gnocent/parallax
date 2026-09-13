@@ -1,0 +1,6 @@
+type;annee;code;description;mode_financement;duree_lease_mois;date_debut_lease;prix_fournisseur_ht;cout_annuel_ht;duree_cout_annees;cpu_coeurs;specrate;phoronix;ram_go;hdd_nb;hdd_to;ssd_nb;ssd_to;nic_nb;nic_gbps;gpu_nb;gpu_ram_go;gpu_tflops_fp8;gpu_bp_tos
+STD;2020;STD-2020;Nœud de calcul standard, génération 2020;LEASE;60;2020-06-01;18000;4200;5;40;210;;768;;;12;8;2;10;;;;
+DENSE;2025;DENSE-2025;Nœud de stockage dense, génération 2025;LEASE;60;2025-04-01;42000;9800;5;64;480;;1024;24;24;2;3,84;2;25;;;;
+COMPACT;2024;COMPACT-2024;Nœud compact pour environnements non-prod;ACHAT;;;15500;;;32;250;;256;;;4;3,84;2;10;;;;
+LEGACY;2023;LEGACY-2023;Modèle de transition, en fin de vie;LEASE;36;2023-01-15;21000;5200;5;48;310;;256;;;8;7,68;2;10;;;;
+GPU;2025;GPU-2025;Nœud accélérateur, génération 2025;LEASE;60;2025-09-01;120000;27000;5;64;520;;1536;;;4;7,68;4;100;4;80;1979;3,35

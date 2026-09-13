@@ -1,0 +1,18 @@
+bin/
+data/
+*.db
+*.db-wal
+*.db-shm
+__pycache__/
+*.pyc
+.env
+
+# Notes de cadrage et guides d'entretien : la démarche qui a produit les
+# spécifications, pas les spécifications elles-mêmes. Gardés en local.
+docs/cadrage.md
+docs/entretiens-v3.md
+docs/backlog*.md
+
+# Configuration locale de l'assistant (peut contenir des commandes exécutées
+# pendant le développement) : jamais publiée.
+.claude/

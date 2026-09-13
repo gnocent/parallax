@@ -1,0 +1,94 @@
+{{/*
+Détail d'une règle (/regles/{id}) : formulaire complet toujours visible, même
+principe que modele_champs (templates/modeles/detail.html) — pas de bascule
+lecture/édition, PUT /regles/{id} réaffiche ce même fragment avec succès ou
+erreur.
+
+Actif n'a pas de champ visible ici (bascule réservée aux boutons
+Activer/Désactiver de la liste, /regles) : il voyage en champ caché pour que
+ModifierRegle, qui écrase la colonne actif, ne désactive pas la règle faute
+d'un champ pour le reporter — voir le commentaire de regleModifier
+(handlers_regle.go).
+*/}}
+
+{{define "regle_page"}}
+<p><a href="/regles">&larr; {{t "regles.titre"}}</a></p>
+<h1>{{.Regle.Nom}}</h1>
+
+{{template "regle_champs" .Regle}}
+{{end}}
+
+{{define "regle_champs"}}
+<div class="carte" id="regle-champs">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<form hx-put="/regles/{{.ID}}" hx-target="#regle-champs" hx-swap="outerHTML">
+  <input type="hidden" name="actif" value="{{if .Actif}}1{{end}}">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:2; min-width:180px; margin:0;">{{t "simulation.champ_nom"}}
+      <input type="text" name="nom" value="{{.Nom}}" required maxlength="200">
+    </label>
+    <label style="flex:1; min-width:160px; margin:0;">{{t "regles.metrique"}}
+      <select name="metrique_id" required>
+        {{range .Referentiels.Metriques}}<option value="{{.ID}}" {{if eq .ID $.MetriqueID}}selected{{end}}>{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:150px; margin:0;">{{t "regles.niveau"}}
+      <select name="niveau_evaluation" required>
+        <option value="PERIMETRE" {{if eq .NiveauEvaluation "PERIMETRE"}}selected{{end}}>{{t "regles.niveau_perimetre"}}</option>
+        <option value="PAR_SERVEUR" {{if eq .NiveauEvaluation "PAR_SERVEUR"}}selected{{end}}>{{t "regles.niveau_par_serveur"}}</option>
+      </select>
+    </label>
+    <label style="flex:1; min-width:150px; margin:0;">{{t "regles.composant_offre"}}
+      <input type="text" name="composant_offre" value="{{videSiNil .ComposantOffre}}" maxlength="80">
+    </label>
+  </div>
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-top:10px;">
+    <label style="flex:3; min-width:260px; margin:0;">{{t "regles.expression"}}
+      <input type="text" name="expression" value="{{.Expression}}" required maxlength="1000">
+    </label>
+    <label style="flex:2; min-width:200px; margin:0;">{{t "simulation.champ_commentaire"}}
+      <input type="text" name="commentaire" value="{{videSiNil .Commentaire}}" maxlength="500">
+    </label>
+  </div>
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-top:10px;">
+    <label style="flex:1; min-width:140px; margin:0;">{{t "simulation.champ_projet"}}
+      <select name="projet_id">
+        <option value="" {{if not .ProjetIDOuZero}}selected{{end}}>—</option>
+        {{range .Referentiels.Projets}}<option value="{{.ID}}" {{if eq .ID $.ProjetIDOuZero}}selected{{end}}>{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:150px; margin:0;">{{t "simulation.champ_environnement"}}
+      <select name="environnement_id">
+        <option value="" {{if not .EnvironnementIDOuZero}}selected{{end}}>—</option>
+        {{range .Referentiels.Environnements}}<option value="{{.ID}}" {{if eq .ID $.EnvironnementIDOuZero}}selected{{end}}>{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:140px; margin:0;">{{t "simulation.champ_techno"}}
+      <select name="techno_id">
+        <option value="" {{if not .TechnoIDOuZero}}selected{{end}}>—</option>
+        {{range .Referentiels.Technos}}<option value="{{.ID}}" {{if eq .ID $.TechnoIDOuZero}}selected{{end}}>{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:120px; margin:0;">{{t "simulation.champ_tier"}}
+      <select name="tier_id">
+        <option value="" {{if not .TierIDOuZero}}selected{{end}}>—</option>
+        {{range .Referentiels.Tiers}}<option value="{{.ID}}" {{if eq .ID $.TierIDOuZero}}selected{{end}}>{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:140px; margin:0;">{{t "simulation.champ_usage"}}
+      <select name="usage_id">
+        <option value="" {{if not .UsageIDOuZero}}selected{{end}}>—</option>
+        {{range .Referentiels.Usages}}<option value="{{.ID}}" {{if eq .ID $.UsageIDOuZero}}selected{{end}}>{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:150px; margin:0;">{{t "simulation.champ_cluster"}}
+      <select name="cluster_id">
+        <option value="" {{if not .ClusterIDOuZero}}selected{{end}}>—</option>
+        {{range .Referentiels.Clusters}}<option value="{{.ID}}" {{if eq .ID $.ClusterIDOuZero}}selected{{end}}>{{.Nom}}</option>{{end}}
+      </select>
+    </label>
+  </div>
+  <button type="submit" style="margin-top:12px">{{t "commun.enregistrer"}}</button>
+</form>
+</div>
+{{end}}

@@ -1,0 +1,217 @@
+{{/*
+Constructeur de vues (v1.6) — remplace les tableaux croisés dynamiques.
+
+  - "vues_page"              page complète : constructeur + mes vues + résultat
+  - "vues_panneau_mes_vues"  la liste des vues enregistrées (fragment,
+                              réaffichée après un enregistrement)
+  - "vues_resultat"          le tableau de résultat (fragment, réaffiché à
+                              chaque « Générer »)
+  - "vue_ouverte_page"       consultation d'une vue enregistrée
+
+Depuis la v3.3, les colonnes « Unités de licence » et « Coût licences »
+se calculent sur le groupe (internal/vues/licences.go) : demandées sans
+axe techno, le résultat se découpe automatiquement par techno (l'axe est
+ajouté en fin, les en-têtes suivent), et une note rappelle la non-additivité
+du niveau GLOBAL quand un tel contrat est en vigueur.
+
+Un seul <form id="constructeur"> sert trois usages, sans JavaScript propre :
+  - "Générer"        bouton type=button, hx-get vers /vues/resultat
+  - "Exporter CSV/Excel"  boutons type=submit avec formaction/formmethod=get
+                          vers /vues/resultat.csv ou .xlsx : navigation
+                          native du navigateur, déclenche le téléchargement
+  - "Enregistrer cette vue"  bouton type=button, hx-post vers /vues (le jeton
+                              CSRF passe par l'en-tête hx-headers du <body>,
+                              pas besoin de champ cache ici)
+*/}}
+
+{{define "vues_page"}}
+<h1>{{t "nav.vues"}}</h1>
+<p class="sous-titre">{{t "vues.sous_titre"}}</p>
+
+<div class="carte" style="margin-bottom:18px;">
+  <h2 style="margin-top:0">{{t "vues.construire_titre"}}</h2>
+  <form id="constructeur">
+    <div style="display:flex; gap:24px; flex-wrap:wrap; margin-bottom:16px;">
+      <div>
+        <strong style="font-size:12px; color:var(--texte-discret)">{{t "vues.label_scenario"}}</strong>
+        <div style="margin-top:6px;">
+          <select name="scenario" hx-get="/vues/resultat" hx-include="#constructeur" hx-target="#resultat" hx-swap="innerHTML">
+            <option value="0" {{if not .ScenarioID}}selected{{end}}>{{t "vues.reel"}}</option>
+            {{range .Scenarios}}<option value="{{.ID}}" {{if eq .ID $.ScenarioID}}selected{{end}}>{{.Nom}}</option>{{end}}
+          </select>
+        </div>
+      </div>
+      <div>
+        <strong style="font-size:12px; color:var(--texte-discret)">{{t "vues.label_date"}}</strong>
+        <div style="margin-top:6px;">
+          <input type="date" name="date" value="{{.Date}}" required style="margin:0;"
+                 hx-get="/vues/resultat" hx-include="#constructeur" hx-target="#resultat" hx-swap="innerHTML">
+        </div>
+      </div>
+      <div>
+        <strong style="font-size:12px; color:var(--texte-discret)">{{t "vues.label_axes"}}</strong>
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <select name="axe1">
+            <option value="">—</option>
+            {{range .Dimensions}}<option value="{{.Code}}">{{.Libelle}}</option>{{end}}
+          </select>
+          <select name="axe2">
+            <option value="">—</option>
+            {{range .Dimensions}}<option value="{{.Code}}">{{.Libelle}}</option>{{end}}
+          </select>
+          <select name="axe3">
+            <option value="">—</option>
+            {{range .Dimensions}}<option value="{{.Code}}">{{.Libelle}}</option>{{end}}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <strong style="font-size:12px; color:var(--texte-discret)">{{t "vues.label_colonnes"}}</strong>
+      <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:6px;">
+        {{range .Colonnes}}
+        <label style="display:flex; align-items:center; gap:4px; margin:0;">
+          <input type="checkbox" name="colonne" value="{{.Code}}" checked style="width:auto">
+          {{.Libelle}}
+        </label>
+        {{end}}
+      </div>
+    </div>
+
+    <details style="margin-bottom:16px;">
+      <summary style="cursor:pointer; font-size:12px; color:var(--texte-discret)">{{t "vues.filtres"}}</summary>
+      <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:10px;">
+        {{range .Dimensions}}
+        <label style="margin:0; min-width:150px;">{{.Libelle}}
+          <select name="filtre_{{.Code}}" multiple size="4">
+            {{range index $.ValeursFiltre .Code}}<option value="{{.}}">{{.}}</option>{{end}}
+          </select>
+        </label>
+        {{end}}
+      </div>
+    </details>
+
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <button type="button" hx-get="/vues/resultat" hx-include="#constructeur"
+              hx-target="#resultat" hx-swap="innerHTML">{{t "vues.generer"}}</button>
+      <button type="submit" class="bouton-discret" formaction="/vues/resultat.csv" formmethod="get">{{t "vues.export_csv"}}</button>
+      <button type="submit" class="bouton-discret" formaction="/vues/resultat.xlsx" formmethod="get">{{t "vues.export_excel"}}</button>
+      <span style="flex:1"></span>
+      <input type="text" name="nom" placeholder="Nom de la vue" style="width:180px; margin:0;">
+      <label style="display:flex; align-items:center; gap:4px; margin:0; white-space:nowrap;">
+        <input type="checkbox" name="partagee" style="width:auto"> {{t "vues.partager"}}
+      </label>
+      <button type="button" hx-post="/vues" hx-include="#constructeur"
+              hx-target="#panneau-mes-vues" hx-swap="outerHTML">{{t "vues.enregistrer_vue"}}</button>
+    </div>
+  </form>
+</div>
+
+<div id="resultat"><p class="vide">{{t "vues.choisir_axes"}}</p></div>
+
+{{/* Export universel (backlog v3.0) du tableau « Mes vues » — hors du
+     fragment vues_panneau_mes_vues, qui est aussi renvoyé par l'enregistrement
+     d'une vue sans les liens sous la main. Le résultat du constructeur garde
+     ses exports dédiés (boutons du formulaire ci-dessus). */}}
+<div class="barre-outils">
+  <h2 style="margin:0">{{t "vues.mes_vues_titre"}}</h2>
+  {{template "export_boutons" .Export}}
+</div>
+{{template "vues_panneau_mes_vues" .}}
+{{end}}
+
+{{define "vues_panneau_mes_vues"}}
+<div id="panneau-mes-vues">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+{{if .Vues}}
+<table>
+  <thead><tr><th>{{t "vues.table_nom"}}</th><th>{{t "vues.table_partage"}}</th><th></th></tr></thead>
+  <tbody>
+    {{range .Vues}}
+    <tr>
+      <td><a href="/vues/{{.ID}}">{{.Nom}}</a></td>
+      <td>{{if .Partagee}}<span class="badge badge-actif">{{t "vues.badge_partagee"}}</span>{{else}}<span class="badge">{{t "vues.badge_privee"}}</span>{{end}}</td>
+      <td></td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+{{else}}
+<p class="vide">{{t "vues.aucune_vue"}}</p>
+{{end}}
+</div>
+{{end}}
+
+{{define "vues_resultat"}}
+<table>
+  <thead><tr>
+    {{range .LibellesAxes}}<th>{{.}}</th>{{end}}
+    {{range .LibellesColonnes}}<th>{{.}}</th>{{end}}
+  </tr></thead>
+  <tbody>
+    {{range .Lignes}}
+    <tr>
+      {{range .Cles}}<td>{{if .}}{{.}}{{else}}<span class="vide">—</span>{{end}}</td>{{end}}
+      {{range .Valeurs}}<td>{{formaterNombre .}}</td>{{end}}
+    </tr>
+    {{else}}
+    <tr><td colspan="12" class="vide">{{t "vues.aucune_donnee"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{if .NoteGlobal}}{{template "licences_note_global"}}{{end}}
+{{end}}
+
+{{/* Rappel posé sous un résultat (vues et comparaison) dès qu'une colonne de
+     licences est affichée avec un contrat de niveau GLOBAL en vigueur
+     (backlog v3.3 : ce niveau n'est pas additif). */}}
+{{define "licences_note_global"}}
+<p class="sous-titre" style="margin-top:8px;">
+  {{t "vues.note_global"}}
+</p>
+{{end}}
+
+{{define "vue_ouverte_page"}}
+<h1>{{.Vue.Nom}}</h1>
+<p class="sous-titre">
+  {{if .Vue.Partagee}}<span class="badge badge-actif">{{t "vues.badge_partagee"}}</span>{{else}}<span class="badge">{{t "vues.badge_privee"}}</span>{{end}}
+  — {{t "vues.vue_ouverte_soustitre"}}
+</p>
+
+<div class="barre-outils">
+  <div class="filtres">
+    <form method="get" class="en-ligne" style="display:flex; gap:10px; align-items:center;">
+      <label style="margin:0; display:flex; align-items:center; gap:4px;">{{t "vues.label_scenario"}}
+        <select name="scenario" onchange="this.form.submit()">
+          <option value="0" {{if not .ScenarioID}}selected{{end}}>{{t "vues.reel"}}</option>
+          {{range .Scenarios}}<option value="{{.ID}}" {{if eq .ID $.ScenarioID}}selected{{end}}>{{.Nom}}</option>{{end}}
+        </select>
+      </label>
+      <label style="margin:0; display:flex; align-items:center; gap:4px;">{{t "vues.label_date"}}
+        <input type="date" name="date" value="{{.Date}}" required style="margin:0;" onchange="this.form.submit()">
+      </label>
+    </form>
+  </div>
+  <div class="filtres">
+    <a class="bouton" href="/vues/{{.Vue.ID}}/resultat.csv?scenario={{.ScenarioID}}&date={{.Date}}">{{t "vues.export_csv"}}</a>
+    <a class="bouton" href="/vues/{{.Vue.ID}}/resultat.xlsx?scenario={{.ScenarioID}}&date={{.Date}}">{{t "vues.export_excel"}}</a>
+  </div>
+  {{if .EstProprietaire}}
+  <div class="filtres">
+    <form method="post" action="/vues/{{.Vue.ID}}/partager" class="en-ligne">
+      <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+      <button type="submit" class="bouton-discret">{{if .Vue.Partagee}}{{t "vues.ne_plus_partager"}}{{else}}{{t "vues.partager"}}{{end}}</button>
+    </form>
+    <form method="post" action="/vues/{{.Vue.ID}}/supprimer" class="en-ligne">
+      <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+      <button type="submit" class="bouton-danger">{{t "commun.supprimer"}}</button>
+    </form>
+  </div>
+  {{end}}
+</div>
+
+{{template "vues_resultat" .Resultat}}
+
+<p><a href="/vues">{{t "vues.retour_constructeur"}}</a></p>
+{{end}}

@@ -1,0 +1,69 @@
+{{/*
+Écran de paramètres de la sauvegarde locale automatique (backlog v3.7),
+réservé à un administrateur — voir handlers_sauvegarde.go. Tous les jours à
+l'heure réglée, une copie de la base est écrite dans le dossier réglé, mais
+seulement si quelque chose a changé depuis la précédente (depot.ActiviteDepuis) ;
+les copies plus vieilles que la rétention réglée sont supprimées. Mécanisme
+indépendant du dépôt périodique sur S3 (PARALLAX_S3_*, docs/deploiement.md §6.2).
+
+  - "parametres_sauvegarde_page"  page complète : réglages, état, fichiers
+*/}}
+
+{{define "parametres_sauvegarde_page"}}
+<h1>{{t "sauvegarde.titre"}}</h1>
+<p class="sous-titre">{{t "sauvegarde.sous_titre"}}</p>
+
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+{{if .Succes}}<p class="message-succes">{{.Succes}}</p>{{end}}
+
+<div class="carte">
+  <div class="barre-outils" style="margin-bottom:16px;">
+    {{if .Active}}
+    <span class="badge badge-actif">{{t "sauvegarde.statut_active"}}</span>
+    {{else}}
+    <span class="badge badge-inactif">{{t "sauvegarde.statut_inactive"}}</span>
+    {{end}}
+    {{if .DerniereReussite}}
+    <span class="sous-titre" style="margin:0;">{{t "sauvegarde.derniere_reussite"}} {{.DerniereReussite}}</span>
+    {{end}}
+  </div>
+
+  <form method="post" action="/parametres/sauvegarde">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+    <div style="display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap;">
+      <label style="flex:2; min-width:260px; margin:0;">{{t "sauvegarde.label_dossier"}}
+        <input type="text" name="dossier" value="{{.Dossier}}" required placeholder="/var/lib/parallax/sauvegardes">
+      </label>
+      <label style="flex:0 0 130px; margin:0;">{{t "sauvegarde.label_heure"}}
+        <input type="time" name="heure" value="{{.Heure}}" required>
+      </label>
+      <label style="flex:0 0 160px; margin:0;">{{t "sauvegarde.label_retention"}}
+        <input type="number" name="retention_jours" value="{{.RetentionJours}}" required min="1" step="1">
+      </label>
+      <button type="submit">{{t "commun.enregistrer"}}</button>
+    </div>
+  </form>
+  <p class="sous-titre" style="margin:12px 0 0;">{{t "sauvegarde.aide_dossier"}}</p>
+</div>
+
+<form method="post" action="/parametres/sauvegarde/maintenant" style="margin-top:14px;">
+  <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+  <button type="submit" class="bouton-discret">{{t "sauvegarde.maintenant"}}</button>
+</form>
+
+<h2>{{t "sauvegarde.fichiers_titre"}}</h2>
+<table>
+  <thead><tr><th>{{t "sauvegarde.table_fichier"}}</th><th>{{t "sauvegarde.table_taille"}}</th><th>{{t "sauvegarde.table_date"}}</th></tr></thead>
+  <tbody>
+    {{range .Fichiers}}
+    <tr>
+      <td><span class="code">{{.Nom}}</span></td>
+      <td>{{formaterOctets .Taille}}</td>
+      <td>{{.ModifieLe.Format "2006-01-02 15:04:05"}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="3" class="vide">{{t "sauvegarde.aucun_fichier"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}

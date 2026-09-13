@@ -1,0 +1,75 @@
+{{/*
+Écran d'import des clusters : une ligne par cluster, dimensions désignées
+par leur code de référentiel. Analyse (jamais d'écriture) puis confirmation
+dans une transaction unique — voir handlers_import_clusters.go.
+
+  - "import_clusters_page"      page complète
+  - "import_clusters_resultat"  fragment : erreurs / simulation / écrit
+*/}}
+
+{{define "import_clusters_page"}}
+<h1>{{t "import.clusters.titre"}}</h1>
+<p class="sous-titre">
+  {{t "import.clusters.sous_titre_1"}} <a href="/import/referentiels">{{t "import.clusters.lien_referentiels"}}</a>{{t "import.clusters.sous_titre_2"}}
+</p>
+
+<div class="carte" style="margin-bottom:18px">
+  <h2 style="margin-top:0">{{t "import.commun.format_attendu"}}</h2>
+  <p class="sous-titre" style="margin-bottom:10px;">
+    {{t "import.commun.format_csv_standard"}}
+  </p>
+  <p><strong>{{t "import.commun.obligatoires"}}</strong> :
+    <code>nom</code>, <code>projet_code</code>, <code>environnement_code</code>,
+    <code>techno_code</code>.</p>
+  <p><strong>{{t "import.commun.facultatives"}}</strong> :
+    <code>tier_code</code>, <code>usage_code</code>, <code>commentaire</code>.</p>
+  <p>{{t "import.clusters.unique"}}</p>
+  <p>{{t "import.commun.exemple"}} :</p>
+  <pre style="background:#eef1f4; padding:10px; border-radius:6px; overflow-x:auto; margin:0;">nom;projet_code;environnement_code;techno_code;tier_code;usage_code;commentaire
+ElasticHot;LOGS;PROD;ELASTIC;HOT;;Indexation temps réel
+ElasticCold1;LOGS;PROD;ELASTIC;COLD;;
+Kafka;LOGS;PROD;KAFKA;;INGEST;</pre>
+  <p style="margin:10px 0 0;"><a href="/import/exemples/clusters">{{t "import.commun.telecharger_exemple"}}</a></p>
+</div>
+
+<form class="carte" hx-post="/import/clusters/analyser" hx-encoding="multipart/form-data"
+      hx-target="#resultat-import-clusters" hx-swap="innerHTML">
+  <label style="max-width:420px;">{{t "import.commun.fichier_csv"}}
+    <input type="file" name="fichier" accept=".csv" required>
+  </label>
+  <button type="submit">{{t "import.commun.analyser"}}</button>
+</form>
+
+<div id="resultat-import-clusters" style="margin-top:18px;"></div>
+{{end}}
+
+{{define "import_clusters_resultat"}}
+{{if .MessageJeton}}
+<p class="message-erreur">{{.MessageJeton}}</p>
+{{else if .Erreurs}}
+{{template "import_etapes" "erreurs"}}
+<div class="message-erreur">
+  <p style="margin:0 0 8px;"><strong>{{len .Erreurs}} {{t "import.commun.lignes_erreur_sur"}} {{.NbLignes}}</strong>
+    — {{t "import.commun.aucune_ecriture"}}</p>
+  <ul style="margin:0; padding-left:18px;">
+    {{range .Erreurs}}<li>{{t "import.commun.ligne"}} {{.Ligne}} : {{.Message}}</li>{{end}}
+  </ul>
+</div>
+{{else if .Ecrit}}
+{{template "import_etapes" "ecrit"}}
+<p class="message-succes">
+  {{.NbClusters}} {{t "import.clusters.cluster_importe_sur"}} {{.NbLignes}} {{t "import.commun.ligne_s_point"}}
+</p>
+{{else}}
+{{template "import_etapes" "pret"}}
+<div class="carte">
+  <p style="margin:0 0 12px;" class="message-succes">
+    {{.NbClusters}} {{t "import.clusters.prets"}} {{t "import.commun.rien_ecrit"}}
+  </p>
+  <form hx-post="/import/clusters/confirmer" hx-target="#resultat-import-clusters" hx-swap="innerHTML">
+    <input type="hidden" name="jeton" value="{{.Jeton}}">
+    <button type="submit">{{t "import.commun.confirmer_import"}}</button>
+  </form>
+</div>
+{{end}}
+{{end}}

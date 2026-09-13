@@ -1,0 +1,136 @@
+{{/*
+Écran des demandes de matériel (backlog v3.2). Pour chaque serveur retenu par
+les filtres, le bloc de description rendu par le gabarit global
+(/parametres/gabarit), prêt à être copié dans l'outil de demande interne.
+
+  - "demandes_page"   page complète : filtres (formulaire GET classique, pour
+                       que l'URL — et donc les liens d'export — portent la
+                       sélection), action « numéro en masse », tableau
+  - "demandes_ligne"  une ligne ; renvoyée seule par PUT /demandes/{id}/fiche
+                       après édition du numéro de fiche, bloc recalculé
+
+Le numéro de fiche s'édite dans la ligne (input hx-put au changement) ; le
+numéro de demande s'affecte en masse à tous les serveurs affichés, dont les
+identifiants voyagent en champs cachés dans le formulaire de l'action.
+*/}}
+
+{{define "demandes_page"}}
+<h1>{{t "demandes.titre"}}</h1>
+<p class="sous-titre">{{t "demandes.sous_titre"}}</p>
+
+{{if .Succes}}<p class="message-succes">{{.Succes}}</p>{{end}}
+{{if .GabaritProbleme}}<p class="message-erreur">{{.GabaritProbleme}} <a href="/parametres/gabarit">{{t "demandes.corriger_gabarit"}}</a>.</p>{{end}}
+{{if not .GabaritPresent}}{{if not .GabaritProbleme}}
+<p class="message-erreur">{{t "demandes.gabarit_absent"}}
+  <a href="/parametres/gabarit">{{t "demandes.definir_gabarit"}}</a> {{t "demandes.administrateur_note"}}</p>
+{{end}}{{end}}
+
+<form class="carte" method="get" action="/demandes" style="margin-bottom:18px">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:1; min-width:160px; margin:0;">{{t "demandes.label_parc"}}
+      <select name="scenario">
+        <option value="">{{t "demandes.reel"}}</option>
+        {{range .Scenarios}}<option value="{{.ID}}" {{if eq .ID $.Filtre.ScenarioID}}selected{{end}}>{{t "demandes.hypothese_prefixe"}} « {{.Nom}} »</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:140px; margin:0;">{{t "demandes.label_projet"}}
+      <select name="projet">
+        <option value="">{{t "demandes.tous"}}</option>
+        {{range .Projets}}<option value="{{.ID}}" {{if eq .ID $.Filtre.ProjetID}}selected{{end}}>{{.Code}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:140px; margin:0;">{{t "demandes.label_environnement"}}
+      <select name="environnement">
+        <option value="">{{t "demandes.tous"}}</option>
+        {{range .Environnements}}<option value="{{.ID}}" {{if eq .ID $.Filtre.EnvironnementID}}selected{{end}}>{{.Code}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:180px; margin:0;">{{t "demandes.label_cluster"}}
+      <select name="cluster">
+        <option value="">{{t "demandes.tous"}}</option>
+        {{range .Clusters}}<option value="{{.ID}}" {{if eq .ID $.Filtre.ClusterID}}selected{{end}}>{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:140px; margin:0;">{{t "commun.statut"}}
+      <select name="statut">
+        <option value="">{{t "demandes.tous"}}</option>
+        {{range .Statuts}}<option value="{{.}}" {{if eq . $.Filtre.Statut}}selected{{end}}>{{.}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:140px; margin:0;">{{t "demandes.label_numero_demande"}}
+      <input type="text" name="demande" value="{{.Filtre.Demande}}" maxlength="100" placeholder="D-2027-012">
+    </label>
+    <label style="margin:0; display:flex; align-items:center; gap:6px; padding-bottom:6px;">
+      <input type="checkbox" name="sans_numero" value="1" {{if .Filtre.SansNumero}}checked{{end}}>
+      {{t "demandes.sans_numero"}}
+    </label>
+    <button type="submit">{{t "demandes.filtrer"}}</button>
+  </div>
+</form>
+
+<div class="barre-outils">
+  {{if .PeutEditer}}
+  <form method="post" action="/demandes/numero" class="filtres">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+    {{with .Filtre}}
+    <input type="hidden" name="scenario" value="{{if .ScenarioID}}{{.ScenarioID}}{{end}}">
+    <input type="hidden" name="projet" value="{{if .ProjetID}}{{.ProjetID}}{{end}}">
+    <input type="hidden" name="environnement" value="{{if .EnvironnementID}}{{.EnvironnementID}}{{end}}">
+    <input type="hidden" name="cluster" value="{{if .ClusterID}}{{.ClusterID}}{{end}}">
+    <input type="hidden" name="statut" value="{{.Statut}}">
+    <input type="hidden" name="demande" value="{{.Demande}}">
+    {{if .SansNumero}}<input type="hidden" name="sans_numero" value="1">{{end}}
+    {{end}}
+    {{range .Lignes}}<input type="hidden" name="id" value="{{.ServeurID}}">{{end}}
+    <label style="margin:0; display:flex; align-items:center; gap:6px;">{{t "demandes.affecter_numero"}}
+      <input type="text" name="numero" maxlength="100" placeholder="D-2027-012" style="width:140px">
+    </label>
+    <button type="submit" class="bouton-petit" {{if not .Lignes}}disabled{{end}}>{{t "demandes.a_tous_serveurs"}} ({{len .Lignes}})</button>
+  </form>
+  {{else}}<span></span>{{end}}
+  {{template "export_boutons" .Export}}
+</div>
+
+<script>
+// Copie le bloc de la ligne dans le presse-papier — pas de bibliothèque,
+// l'API navigateur suffit ; le libellé du bouton confirme brièvement.
+function copierBloc(bouton) {
+  var pre = bouton.closest('td').querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent).then(function () {
+    var libelle = bouton.textContent;
+    bouton.textContent = '{{t "demandes.copie"}}';
+    setTimeout(function () { bouton.textContent = libelle; }, 1200);
+  });
+}
+</script>
+
+<div id="tableau-demandes">
+<table>
+  <thead><tr>
+    <th>{{t "demandes.table_serveur"}}</th><th>{{t "demandes.label_cluster"}}</th><th>{{t "commun.statut"}}</th><th>{{t "demandes.table_numero_demande"}}</th><th>{{t "demandes.table_numero_fiche"}}</th><th>{{t "demandes.table_description"}}</th>
+  </tr></thead>
+  <tbody>
+    {{range .Lignes}}{{template "demandes_ligne" .}}{{else}}
+    <tr><td colspan="6" class="vide">{{t "demandes.aucun_serveur"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "demandes_ligne"}}
+<tr id="demande-{{.ServeurID}}">
+  <td><a href="/serveurs/{{.ServeurID}}">{{if .NomPhysique}}{{.NomPhysique}}{{else}}{{t "demandes.sans_nom"}} #{{.ServeurID}}{{end}}</a>
+    {{if .Scenario}}<br><span class="badge badge-actif">{{.Scenario}}</span>{{end}}
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}</td>
+  <td>{{if .Cluster}}{{.Cluster}}{{else}}—{{end}}</td>
+  <td><span class="badge">{{.Statut}}</span></td>
+  <td>{{if .NumDemande}}{{.NumDemande}}{{else}}—{{end}}</td>
+  <td>{{if .PeutEditer}}
+    <input type="text" name="fiche" value="{{.NumFiche}}" maxlength="100" style="width:110px"
+           title="{{t "demandes.titre_fiche_input"}}"
+           hx-put="/demandes/{{.ServeurID}}/fiche" hx-trigger="change" hx-target="closest tr" hx-swap="outerHTML">
+    {{else}}{{if .NumFiche}}{{.NumFiche}}{{else}}—{{end}}{{end}}</td>
+  <td>{{if .Bloc}}<pre class="bloc-demande" style="margin:0 0 6px; white-space:pre-wrap; font-size:12px;">{{.Bloc}}</pre><button type="button" class="bouton-discret bouton-petit" onclick="copierBloc(this)">{{t "demandes.copier"}}</button>{{else}}—{{end}}</td>
+</tr>
+{{end}}

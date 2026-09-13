@@ -1,0 +1,67 @@
+{{/*
+Écran Usages — variante minimale du patron projets (voir
+templates/projets/liste.html pour les conventions détaillées) : ni drapeau
+d'activité, ni ordre d'affichage, seulement code et libellé.
+*/}}
+
+{{define "usages_page"}}
+<h1>{{t "usages.titre"}}</h1>
+<p class="sous-titre">{{t "usages.sous_titre"}}</p>
+
+<form class="carte" style="margin-bottom:18px" hx-post="/usages"
+      hx-target="#tableau-usages" hx-swap="outerHTML">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:1; min-width:140px; margin:0;">{{t "commun.code"}}
+      <input type="text" name="code" required maxlength="40" placeholder="LOGS">
+    </label>
+    <label style="flex:2; min-width:200px; margin:0;">{{t "commun.libelle"}}
+      <input type="text" name="libelle" required maxlength="200" placeholder="Log management">
+    </label>
+    <button type="submit">{{t "commun.ajouter"}}</button>
+  </div>
+</form>
+
+{{template "usages_tableau" .}}
+{{end}}
+
+{{define "usages_tableau"}}
+<div id="tableau-usages">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr><th>{{t "commun.code"}}</th><th>{{t "commun.libelle"}}</th><th></th></tr></thead>
+  <tbody>
+    {{range .Usages}}{{template "usages_ligne" .}}{{else}}
+    <tr><td colspan="3" class="vide">{{t "usages.aucun"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "usages_ligne"}}
+<tr id="usage-{{.ID}}">
+  <td>{{.Code}}</td>
+  <td>{{.Libelle}}{{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}</td>
+  <td class="actions-ligne">
+    <button class="bouton-discret bouton-petit"
+            hx-get="/usages/{{.ID}}/editer" hx-target="#usage-{{.ID}}" hx-swap="outerHTML">{{t "commun.modifier"}}</button>
+  </td>
+</tr>
+{{end}}
+
+{{define "usages_ligne_edition"}}
+<tr id="usage-{{.ID}}">
+  <td><input type="text" name="code" value="{{.Code}}" required maxlength="40"></td>
+  <td>
+    <input type="text" name="libelle" value="{{.Libelle}}" required maxlength="200">
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td class="actions-ligne">
+    <button class="bouton-petit"
+            hx-put="/usages/{{.ID}}" hx-include="closest tr" hx-target="#usage-{{.ID}}" hx-swap="outerHTML">{{t "commun.enregistrer"}}</button>
+    <button type="button" class="bouton-discret bouton-petit"
+            hx-get="/usages/{{.ID}}" hx-target="#usage-{{.ID}}" hx-swap="outerHTML">{{t "commun.annuler"}}</button>
+  </td>
+</tr>
+{{end}}

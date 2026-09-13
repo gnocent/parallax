@@ -1,0 +1,24 @@
+{{/*
+Indicateur des trois étapes communes à tous les imports CSV (déposer,
+analyser, confirmer) — partagé par les fragments "import_*_resultat" de ce
+dossier. Argument : la chaîne "erreurs", "ecrit" ou "pret" (le seul état
+possible une fois passé le cas .MessageJeton, jamais montré ici).
+
+  {{template "import_etapes" "pret"}}
+*/}}
+{{define "import_etapes"}}
+<div class="mini-etapes">
+  <div class="mini-etape faite">
+    <span class="mini-etape-num">✓</span>
+    <div class="mini-etape-texte"><strong>{{t "import.etapes.deposer"}}</strong></div>
+  </div>
+  <div class="mini-etape {{if eq . "erreurs"}}active{{else}}faite{{end}}">
+    <span class="mini-etape-num">{{if eq . "erreurs"}}2{{else}}✓{{end}}</span>
+    <div class="mini-etape-texte"><strong>{{t "import.etapes.analyser"}}</strong></div>
+  </div>
+  <div class="mini-etape {{if eq . "ecrit"}}faite{{else if eq . "pret"}}active{{end}}">
+    <span class="mini-etape-num">{{if eq . "ecrit"}}✓{{else}}3{{end}}</span>
+    <div class="mini-etape-texte"><strong>{{t "import.etapes.confirmer"}}</strong></div>
+  </div>
+</div>
+{{end}}

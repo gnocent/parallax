@@ -1,0 +1,142 @@
+{{/*
+Dimensionnement inverse multi-modèles (v2.3) — GET /clusters/{id}/dimensionnement.
+
+  - "cluster_dimensionnement_page"      page : contexte (année, scénario), ce
+                                          qu'on conserve du parc installé (par
+                                          génération), les modèles candidats,
+                                          bouton Calculer
+  - "cluster_dimensionnement_resultat"  fragment : le tableau comparatif, avec
+                                          un bouton Matérialiser par candidat
+                                          (actif seulement sous un scénario)
+
+Un seul <form id="dimensionnement"> : Calculer (hx-get) et Matérialiser
+(hx-post, avec hx-include du formulaire pour reprendre conserver/candidat,
+année et scénario, et hx-vals pour le modèle choisi). Le nombre de serveurs
+n'est jamais transmis : le serveur le recalcule (voir handler).
+*/}}
+
+{{define "cluster_dimensionnement_page"}}
+<p><a href="/clusters/{{.Cluster.ID}}/besoin-offre?annee={{.Annee}}&scenario={{.ScenarioID}}">← {{t "clusters.besoin_offre.titre"}} — {{.Cluster.Nom}}</a></p>
+<h1>{{t "clusters.dimensionnement.titre"}} — {{.Cluster.Nom}}</h1>
+<p class="sous-titre">
+  {{t "clusters.dimensionnement.sous_titre_avant"}} {{.Annee}} ?
+  {{t "clusters.dimensionnement.cochez_avant"}} <strong>{{t "clusters.dimensionnement.conservez"}}</strong> {{t "clusters.dimensionnement.cochez_apres"}}
+</p>
+
+<form method="get" class="filtres" style="margin-bottom:14px;">
+  <label style="margin:0; display:flex; align-items:center; gap:6px;">{{t "simulation.champ_annee"}}
+    <input type="number" name="annee" value="{{.Annee}}" style="width:90px; margin:0;">
+  </label>
+  <label style="margin:0; display:flex; align-items:center; gap:6px;">{{t "simulation.scenario"}}
+    <select name="scenario">
+      <option value="0" {{if not .ScenarioID}}selected{{end}}>{{t "clusters.dimensionnement.reel_simulation"}}</option>
+      {{range .Scenarios}}<option value="{{.ID}}" {{if eq .ID $.ScenarioID}}selected{{end}}>{{.Nom}}</option>{{end}}
+    </select>
+  </label>
+  <button type="submit" class="bouton-discret">{{t "simulation.afficher"}}</button>
+</form>
+
+<form id="dimensionnement">
+  <input type="hidden" name="annee" value="{{.Annee}}">
+  <input type="hidden" name="scenario" value="{{.ScenarioID}}">
+
+  <div class="carte" style="margin-bottom:18px;">
+    <div class="barre-outils" style="margin-bottom:6px;">
+      <h2 style="margin:0">{{t "clusters.dimensionnement.parc_installe_avant"}} {{.DateOffre}}{{if .ScenarioID}} {{t "clusters.dimensionnement.sous_ce_scenario"}}{{end}} — {{.NbInstalles}} {{t "simulation.serveurs_parens"}}</h2>
+      {{template "export_boutons" .ExportGenerations}}
+    </div>
+    {{if not .Generations}}
+    <p class="vide">{{t "clusters.dimensionnement.aucun_serveur"}}</p>
+    {{else}}
+    <table>
+      <thead><tr><th>{{t "clusters.dimensionnement.conserver"}}</th><th>{{t "clusters.dimensionnement.generation"}}</th><th>{{t "clusters.dimensionnement.nb"}}</th><th>{{t "clusters.dimensionnement.capacites_cumulees"}}</th></tr></thead>
+      <tbody>
+        {{range .Generations}}
+        <tr>
+          <td><input type="checkbox" name="conserver" value="{{.ModeleID}}" {{if .Conservee}}checked{{end}} style="width:auto"></td>
+          <td>{{.Code}}</td>
+          <td>{{.Nb}}</td>
+          <td><code>{{.Capacites}}</code></td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    <p class="sous-titre" style="margin-bottom:0;">{{t "clusters.dimensionnement.generation_decochee_avant"}} <strong>{{t "clusters.dimensionnement.retiree"}}</strong> {{t "clusters.dimensionnement.generation_decochee_apres"}}</p>
+    {{end}}
+  </div>
+
+  <div class="carte" style="margin-bottom:18px;">
+    <h2 style="margin-top:0">{{t "clusters.dimensionnement.candidats_titre"}}</h2>
+    {{if not .Candidats}}
+    <p class="vide">{{t "clusters.dimensionnement.candidats_aucun"}}</p>
+    {{else}}
+    <div style="display:flex; gap:14px; flex-wrap:wrap;">
+      {{range .Candidats}}
+      <label style="display:flex; align-items:center; gap:4px; margin:0;">
+        <input type="checkbox" name="candidat" value="{{.ID}}" {{if .Coche}}checked{{end}} style="width:auto">
+        {{.Code}}
+      </label>
+      {{end}}
+    </div>
+    <p class="sous-titre" style="margin-bottom:0;">{{t "clusters.dimensionnement.candidats_aide"}}</p>
+    {{end}}
+  </div>
+
+  <button type="button" hx-get="/clusters/{{.Cluster.ID}}/dimensionnement/resultat"
+          hx-include="#dimensionnement" hx-target="#resultat" hx-swap="innerHTML">{{t "clusters.dimensionnement.calculer"}}</button>
+</form>
+
+<div id="resultat" style="margin-top:18px;"><p class="vide">{{t "clusters.dimensionnement.choisissez_calculer"}}</p></div>
+{{end}}
+
+{{define "cluster_dimensionnement_resultat"}}
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<p class="sous-titre">
+  {{.NbConserves}} {{t "clusters.dimensionnement.resultat_conserves"}} {{.NbRetires}} {{t "clusters.dimensionnement.resultat_a_retirer"}}
+  {{if not .ScenarioID}}{{t "clusters.dimensionnement.simulation_reel_aide"}}{{end}}
+</p>
+{{if not .Lignes}}
+<p class="vide">{{t "clusters.dimensionnement.resultat_aucun"}}</p>
+{{else}}
+{{/* export universel (v3.0) : les liens reprennent conserver/candidat, année
+     et scénario du calcul affiché, vers la page (?tableau=resultat) qui
+     recalcule — jamais un chiffre venu du formulaire */}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr>
+    <th>{{t "clusters.dimensionnement.modele"}}</th><th>{{t "clusters.dimensionnement.a_ajouter"}}</th><th>{{t "clusters.dimensionnement.par_zone"}}</th><th>{{t "clusters.dimensionnement.regle_limitante"}}</th>
+    <th>{{t "simulation.besoin"}}</th><th>{{t "clusters.dimensionnement.conserve_header"}}</th><th>{{t "clusters.dimensionnement.obtenu"}}</th><th>{{t "clusters.dimensionnement.surplus"}}</th>
+    <th>{{t "clusters.dimensionnement.cout_acquisition"}}</th><th>{{t "clusters.dimensionnement.cout_annuel"}}</th><th></th>
+  </tr></thead>
+  <tbody>
+    {{range .Lignes}}
+    <tr>
+      <td>{{.Code}}{{if .RevisionID}} <small>{{t "clusters.dimensionnement.rev"}} {{.RevisionNumero}}</small>{{end}}
+        {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}</td>
+      {{if .Erreur}}
+      <td colspan="10" class="vide">—</td>
+      {{else}}
+      <td><strong>{{.NbServeurs}}</strong></td>
+      <td>{{.ParZoneTexte}}</td>
+      <td>{{.RegleLimitante}} <small><code>{{.ComposantLimitant}}</code></small></td>
+      <td>{{formaterNombre .Besoin}}</td>
+      <td>{{formaterNombre .CapaciteConservee}}</td>
+      <td>{{formaterNombre .CapaciteObtenue}}</td>
+      <td class="{{if lt .Surplus 0.0}}ecart-negatif{{else}}ecart-positif{{end}}">{{formaterNombre .Surplus}}</td>
+      <td>{{formaterNombre .CoutAcquisition}}</td>
+      <td>{{formaterNombre .CoutAnnuel}}</td>
+      <td class="actions-ligne">
+        {{if $.ScenarioID}}
+        <button class="bouton-petit" hx-post="/clusters/{{$.Cluster.ID}}/dimensionnement/materialiser"
+                hx-include="#dimensionnement" hx-vals='{"modele_id":"{{.ModeleID}}"}'
+                hx-target="#resultat" hx-swap="innerHTML"
+                hx-confirm="{{t "clusters.dimensionnement.confirmer_poser"}} {{.NbServeurs}} {{t "simulation.serveurs_parens"}} {{.Code}} {{t "clusters.dimensionnement.confirmer_milieu"}} {{$.NbRetires}} {{t "simulation.serveurs_parens"}} {{t "clusters.dimensionnement.confirmer_fin"}}">{{t "clusters.dimensionnement.materialiser"}}</button>
+        {{end}}
+      </td>
+      {{end}}
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}
+{{end}}

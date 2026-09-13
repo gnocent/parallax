@@ -1,0 +1,201 @@
+{{/*
+Écran clusters (v1.3). Étend le patron de projets/liste.html (lire son
+commentaire de tête d'abord) aux six dimensions du cluster :
+
+  - "clusters_page"           page complète (formulaire de création, filtres,
+                                tableau)
+  - "clusters_tableau"        le <table id="tableau-clusters">, rechargé par
+                                les filtres et renvoyé en entier par la
+                                création (jamais seulement la ligne créée)
+  - "clusters_ligne"          une ligne en lecture, avec le LIBELLÉ de chaque
+                                dimension (pas seulement son id) — résolu côté
+                                serveur par chargerLibellesCluster
+  - "clusters_ligne_edition"  la même ligne en édition. Elle reçoit un
+                                clusterEdition (ligne + référentiels actifs)
+                                plutôt qu'un clusterLigne nu : contrairement à
+                                projets_ligne_edition (deux champs texte),
+                                cette ligne doit repeupler six <select> sans
+                                recharger toute la page.
+
+Le commentaire du cluster n'a pas de champ visible dans l'édition en ligne
+(pas de colonne prévue pour lui) : il est porté par un <input type="hidden">
+pour que ModifierCluster, qui écrase la colonne, ne l'efface pas faute d'un
+champ pour le ressaisir.
+
+Filtres : les cinq <select> au-dessus du tableau portent des noms préfixés
+filtre_ (filtre_projet_id…) pour ne pas entrer en collision avec les champs
+homonymes du formulaire de création, qui inclut leur état courant (hx-include
+sur #filtres-clusters) afin que le tableau retourné après création respecte
+toujours les filtres actifs.
+*/}}
+
+{{define "clusters_page"}}
+<h1>{{t "nav.clusters"}}</h1>
+<p class="sous-titre">{{t "clusters.sous_titre"}}</p>
+
+<form class="carte" style="margin-bottom:18px" hx-post="/clusters"
+      hx-target="#tableau-clusters" hx-swap="outerHTML"
+      hx-include="#filtres-clusters">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:2; min-width:180px; margin:0;">{{t "clusters.champ_nom"}}
+      <input type="text" name="nom" required maxlength="120" placeholder="ElasticCold1">
+    </label>
+    <label style="flex:1; min-width:160px; margin:0;">{{t "clusters.champ_projet"}}
+      <select name="projet_id" required>
+        <option value="">{{t "clusters.choisir"}}</option>
+        {{range .Projets}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:160px; margin:0;">{{t "clusters.champ_environnement"}}
+      <select name="environnement_id" required>
+        <option value="">{{t "clusters.choisir"}}</option>
+        {{range .Environnements}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:160px; margin:0;">{{t "clusters.champ_techno"}}
+      <select name="techno_id" required>
+        <option value="">{{t "clusters.choisir"}}</option>
+        {{range .Technos}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:140px; margin:0;">{{t "clusters.champ_tier"}}
+      <select name="tier_id">
+        <option value="">—</option>
+        {{range .Tiers}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <label style="flex:1; min-width:140px; margin:0;">{{t "clusters.champ_usage"}}
+      <select name="usage_id">
+        <option value="">—</option>
+        {{range .Usages}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+      </select>
+    </label>
+    <button type="submit">{{t "commun.ajouter"}}</button>
+  </div>
+</form>
+
+<div class="barre-outils">
+  <div id="filtres-clusters" class="filtres">
+    <select name="filtre_projet_id"
+            hx-get="/clusters/tableau" hx-target="#tableau-clusters" hx-swap="outerHTML" hx-include="#filtres-clusters">
+      <option value="">{{t "clusters.filtre_tous_projets"}}</option>
+      {{range .Projets}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+    </select>
+    <select name="filtre_environnement_id"
+            hx-get="/clusters/tableau" hx-target="#tableau-clusters" hx-swap="outerHTML" hx-include="#filtres-clusters">
+      <option value="">{{t "clusters.filtre_tous_environnements"}}</option>
+      {{range .Environnements}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+    </select>
+    <select name="filtre_techno_id"
+            hx-get="/clusters/tableau" hx-target="#tableau-clusters" hx-swap="outerHTML" hx-include="#filtres-clusters">
+      <option value="">{{t "clusters.filtre_toutes_technos"}}</option>
+      {{range .Technos}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+    </select>
+    <select name="filtre_tier_id"
+            hx-get="/clusters/tableau" hx-target="#tableau-clusters" hx-swap="outerHTML" hx-include="#filtres-clusters">
+      <option value="">{{t "clusters.filtre_tous_tiers"}}</option>
+      {{range .Tiers}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+    </select>
+    <select name="filtre_usage_id"
+            hx-get="/clusters/tableau" hx-target="#tableau-clusters" hx-swap="outerHTML" hx-include="#filtres-clusters">
+      <option value="">{{t "clusters.filtre_tous_usages"}}</option>
+      {{range .Usages}}<option value="{{.ID}}">{{.Libelle}}</option>{{end}}
+    </select>
+    <label style="margin:0; display:flex; align-items:center; gap:6px;">
+      <input type="checkbox" name="inclure_inactifs"
+             hx-get="/clusters/tableau" hx-target="#tableau-clusters" hx-swap="outerHTML" hx-include="#filtres-clusters">
+      {{t "clusters.inclure_archives"}}
+    </label>
+  </div>
+</div>
+
+{{template "clusters_tableau" .}}
+{{end}}
+
+{{define "clusters_tableau"}}
+<div id="tableau-clusters">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+{{/* export universel (v3.0) : dans le fragment, vers /clusters?filtre_…, pour
+     que les liens reflètent les filtres après chaque rechargement */}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr>
+    <th>{{t "clusters.champ_nom"}}</th><th>{{t "clusters.champ_projet"}}</th><th>{{t "clusters.champ_environnement"}}</th><th>{{t "clusters.champ_techno"}}</th>
+    <th>{{t "clusters.champ_tier"}}</th><th>{{t "clusters.champ_usage"}}</th><th>{{t "commun.statut"}}</th><th></th>
+  </tr></thead>
+  <tbody>
+    {{range .Clusters}}{{template "clusters_ligne" .}}{{else}}
+    <tr><td colspan="8" class="vide">{{t "clusters.aucun"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "clusters_ligne"}}
+<tr id="cluster-{{.ID}}" class="{{if not .Actif}}inactif{{end}}">
+  <td>{{.Nom}}{{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}</td>
+  <td>{{.ProjetLibelle}}</td>
+  <td>{{.EnvironnementLibelle}}</td>
+  <td>{{.TechnoLibelle}}</td>
+  <td>{{if .TierLibelle}}{{.TierLibelle}}{{else}}—{{end}}</td>
+  <td>{{if .UsageLibelle}}{{.UsageLibelle}}{{else}}—{{end}}</td>
+  <td>{{if .Actif}}<span class="badge badge-actif">{{t "commun.actif"}}</span>{{else}}<span class="badge badge-inactif">{{t "commun.archive"}}</span>{{end}}</td>
+  <td class="actions-ligne">
+    <a class="bouton bouton-discret bouton-petit" href="/clusters/{{.ID}}/besoin-offre">{{t "clusters.lien_besoin_offre"}}</a>
+    <button class="bouton-discret bouton-petit"
+            hx-get="/clusters/{{.ID}}/editer" hx-target="#cluster-{{.ID}}" hx-swap="outerHTML">{{t "commun.modifier"}}</button>
+    {{if .Actif}}
+    <button class="bouton-discret bouton-petit"
+            hx-post="/clusters/{{.ID}}/archiver" hx-target="#cluster-{{.ID}}" hx-swap="outerHTML">{{t "commun.archiver"}}</button>
+    {{else}}
+    <button class="bouton-discret bouton-petit"
+            hx-post="/clusters/{{.ID}}/reactiver" hx-target="#cluster-{{.ID}}" hx-swap="outerHTML">{{t "commun.reactiver"}}</button>
+    {{end}}
+  </td>
+</tr>
+{{end}}
+
+{{define "clusters_ligne_edition"}}
+<tr id="cluster-{{.ID}}">
+  <td>
+    <input type="text" name="nom" value="{{.Nom}}" required maxlength="120">
+    <input type="hidden" name="commentaire" value="{{videSiNil .Commentaire}}">
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td>
+    <select name="projet_id" required>
+      {{range .Referentiels.Projets}}<option value="{{.ID}}" {{if eq .ID $.ProjetID}}selected{{end}}>{{.Libelle}}</option>{{end}}
+    </select>
+  </td>
+  <td>
+    <select name="environnement_id" required>
+      {{range .Referentiels.Environnements}}<option value="{{.ID}}" {{if eq .ID $.EnvironnementID}}selected{{end}}>{{.Libelle}}</option>{{end}}
+    </select>
+  </td>
+  <td>
+    <select name="techno_id" required>
+      {{range .Referentiels.Technos}}<option value="{{.ID}}" {{if eq .ID $.TechnoID}}selected{{end}}>{{.Libelle}}</option>{{end}}
+    </select>
+  </td>
+  <td>
+    <select name="tier_id">
+      <option value="" {{if not $.TierIDOuZero}}selected{{end}}>—</option>
+      {{range .Referentiels.Tiers}}<option value="{{.ID}}" {{if eq .ID $.TierIDOuZero}}selected{{end}}>{{.Libelle}}</option>{{end}}
+    </select>
+  </td>
+  <td>
+    <select name="usage_id">
+      <option value="" {{if not $.UsageIDOuZero}}selected{{end}}>—</option>
+      {{range .Referentiels.Usages}}<option value="{{.ID}}" {{if eq .ID $.UsageIDOuZero}}selected{{end}}>{{.Libelle}}</option>{{end}}
+    </select>
+  </td>
+  <td>{{if .Actif}}<span class="badge badge-actif">{{t "commun.actif"}}</span>{{else}}<span class="badge badge-inactif">{{t "commun.archive"}}</span>{{end}}</td>
+  <td class="actions-ligne">
+    <button class="bouton-petit"
+            hx-put="/clusters/{{.ID}}" hx-include="closest tr" hx-target="#cluster-{{.ID}}" hx-swap="outerHTML">{{t "commun.enregistrer"}}</button>
+    <button type="button" class="bouton-discret bouton-petit"
+            hx-get="/clusters/{{.ID}}" hx-target="#cluster-{{.ID}}" hx-swap="outerHTML">{{t "commun.annuler"}}</button>
+  </td>
+</tr>
+{{end}}

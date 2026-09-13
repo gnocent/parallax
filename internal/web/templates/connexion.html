@@ -1,0 +1,19 @@
+{{define "connexion_page"}}
+<div class="page-connexion">
+  <form method="post" action="/connexion" class="carte formulaire-connexion">
+    <h1>Parallax</h1>
+    <p class="sous-titre">{{t "connexion.sous_titre"}}</p>
+    {{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+    <input type="hidden" name="suite" value="{{.Suite}}">
+    <label>
+      {{t "connexion.identifiant"}}
+      <input type="text" name="login" value="{{.Login}}" autofocus required autocomplete="username">
+    </label>
+    <label>
+      {{t "connexion.mot_de_passe"}}
+      <input type="password" name="mot_de_passe" required autocomplete="current-password">
+    </label>
+    <button type="submit">{{t "connexion.bouton"}}</button>
+  </form>
+</div>
+{{end}}

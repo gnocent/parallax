@@ -1,0 +1,16 @@
+{{/*
+Boutons d'export universels (backlog v3.0). Contexte : exportLiens, obtenu
+par liensExport(r) dans le handler et passé au gabarit sous la clé Export.
+
+  {{template "export_boutons" .Export}}
+
+Le handler de la page doit commencer par s.exporter(w, r, …) — voir
+tableau.go — sans quoi les liens renverraient la page HTML.
+*/}}
+
+{{define "export_boutons"}}
+<span class="export-boutons" style="display:inline-flex; gap:6px; margin-left:auto;">
+  <a class="bouton bouton-discret bouton-petit" href="{{.CSV}}" title="{{t "export.csv"}}">CSV</a>
+  <a class="bouton bouton-discret bouton-petit" href="{{.XLSX}}" title="{{t "export.excel"}}">Excel</a>
+</span>
+{{end}}

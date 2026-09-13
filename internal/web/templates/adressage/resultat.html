@@ -1,0 +1,74 @@
+{{/*
+Page d'adressage d'une hypothèse (backlog v3.1). Deux usages, même gabarit :
+
+  - GET  /adressage/scenarios/{id} : aperçu — ce que ferait l'attribution,
+    rien n'est écrit (Ecrit = false) ; le bouton lance le geste ;
+  - POST /adressage/scenarios/{id} : résultat de l'attribution (Ecrit = true).
+
+Contexte : Scenario, Lignes []ligneResultatAdressage, Comptes []compteType,
+Ecrit, Chemin, CSRFToken, Export, Erreur (scénario abandonné : pas de
+tableau). Les lignes « à choisir » portent un formulaire de choix du VLAN,
+qui poste sur /adressage/serveurs/{id} et revient ici.
+*/}}
+
+{{define "adressage_resultat_page"}}
+<h1>{{t "adressage.resultat.titre_prefixe"}} {{.Scenario.Nom}}</h1>
+<p class="sous-titre">
+  {{if .Ecrit}}{{t "adressage.resultat.ecrit_oui"}}{{else}}{{t "adressage.resultat.ecrit_non"}}{{end}}
+  {{t "adressage.resultat.pool_note"}}
+  <a href="/scenarios">{{t "adressage.resultat.retour_scenarios"}}</a>.
+</p>
+
+{{if .Erreur}}
+<p class="message-erreur">{{.Erreur}}</p>
+{{else}}
+
+<div class="carte" style="margin-bottom:18px; display:flex; gap:18px; flex-wrap:wrap; align-items:center;">
+  {{range .Comptes}}
+  <div title="{{.Type}}"><strong>{{.Nb}}</strong> {{.Libelle}}</div>
+  {{end}}
+  {{if not .Ecrit}}
+  <form method="post" action="{{.Chemin}}" style="margin-left:auto;">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+    <button type="submit">{{t "adressage.resultat.bouton_adresser"}}</button>
+  </form>
+  {{else}}
+  <p class="message-succes" style="margin:0 0 0 auto;">{{t "adressage.resultat.attribution_effectuee"}}</p>
+  {{end}}
+</div>
+
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr><th>{{t "adressage.resultat.champ_serveur"}}</th><th>{{t "adressage.resultat.champ_cluster"}}</th><th>{{t "adressage.resultat.champ_issue"}}</th><th>{{t "adressage.resultat.champ_adresse"}}</th><th>{{t "adressage.resultat.champ_vlan"}}</th><th>{{t "adressage.resultat.champ_detail"}}</th></tr></thead>
+  <tbody>
+    {{range .Lignes}}
+    <tr>
+      <td><a href="/serveurs/{{.ServeurID}}">{{if .PhysicalName}}{{.PhysicalName}}{{else}}{{t "adressage.resultat.champ_serveur"}} #{{.ServeurID}}{{end}}</a></td>
+      <td>{{.ClusterNom}}</td>
+      <td>
+        {{if eq .Issue "ATTRIBUE"}}<span class="badge badge-actif">{{.Libelle}}</span>
+        {{else if eq .Issue "DEJA_ADRESSE"}}<span class="badge">{{.Libelle}}</span>
+        {{else}}<span class="badge badge-inactif">{{.Libelle}}</span>{{end}}
+      </td>
+      <td><code>{{.IP}}</code></td>
+      <td>
+        {{if eq .Issue "A_CHOISIR"}}
+        <form method="post" action="/adressage/serveurs/{{.ServeurID}}" style="display:flex; gap:4px; align-items:center;">
+          <input type="hidden" name="_csrf" value="{{$.CSRFToken}}">
+          <input type="hidden" name="suite" value="{{$.Chemin}}">
+          <select name="vlan_id">
+            {{range .Candidats}}<option value="{{.ID}}">{{.Code}}</option>{{end}}
+          </select>
+          <button type="submit" class="bouton-petit">{{t "adressage.resultat.bouton_adresser_ligne"}}</button>
+        </form>
+        {{else}}{{.VlanCode}}{{end}}
+      </td>
+      <td>{{.Detail}}</td>
+    </tr>
+    {{else}}
+    <tr><td colspan="6" class="vide">{{t "adressage.resultat.aucun"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+{{end}}
+{{end}}

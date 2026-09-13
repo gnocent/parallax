@@ -1,0 +1,73 @@
+{{/*
+Écran Tiers — variante du patron projets sans drapeau d'activité (voir
+templates/projets/liste.html pour les conventions détaillées) : pas de
+colonne Statut, pas de boutons Archiver/Réactiver, pas de case "inclure les
+archivés". Champ Ordre en plus (entier, rang d'affichage).
+*/}}
+
+{{define "tiers_page"}}
+<h1>{{t "tiers.titre"}}</h1>
+<p class="sous-titre">{{t "tiers.sous_titre"}}</p>
+
+<form class="carte" style="margin-bottom:18px" hx-post="/tiers"
+      hx-target="#tableau-tiers" hx-swap="outerHTML">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:1; min-width:140px; margin:0;">{{t "commun.code"}}
+      <input type="text" name="code" required maxlength="40" placeholder="HOT">
+    </label>
+    <label style="flex:2; min-width:200px; margin:0;">{{t "commun.libelle"}}
+      <input type="text" name="libelle" required maxlength="200" placeholder="Hot">
+    </label>
+    <label style="width:100px; margin:0;">{{t "environnements.ordre"}}
+      <input type="number" name="ordre" value="0" required>
+    </label>
+    <button type="submit">{{t "commun.ajouter"}}</button>
+  </div>
+</form>
+
+{{template "tiers_tableau" .}}
+{{end}}
+
+{{define "tiers_tableau"}}
+<div id="tableau-tiers">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr><th>{{t "commun.code"}}</th><th>{{t "commun.libelle"}}</th><th>{{t "environnements.ordre"}}</th><th></th></tr></thead>
+  <tbody>
+    {{range .Tiers}}{{template "tiers_ligne" .}}{{else}}
+    <tr><td colspan="4" class="vide">{{t "tiers.aucun"}}</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "tiers_ligne"}}
+<tr id="tier-{{.ID}}">
+  <td>{{.Code}}</td>
+  <td>{{.Libelle}}{{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}</td>
+  <td>{{.Ordre}}</td>
+  <td class="actions-ligne">
+    <button class="bouton-discret bouton-petit"
+            hx-get="/tiers/{{.ID}}/editer" hx-target="#tier-{{.ID}}" hx-swap="outerHTML">{{t "commun.modifier"}}</button>
+  </td>
+</tr>
+{{end}}
+
+{{define "tiers_ligne_edition"}}
+<tr id="tier-{{.ID}}">
+  <td><input type="text" name="code" value="{{.Code}}" required maxlength="40"></td>
+  <td>
+    <input type="text" name="libelle" value="{{.Libelle}}" required maxlength="200">
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td><input type="number" name="ordre" value="{{.Ordre}}" required style="width:80px"></td>
+  <td class="actions-ligne">
+    <button class="bouton-petit"
+            hx-put="/tiers/{{.ID}}" hx-include="closest tr" hx-target="#tier-{{.ID}}" hx-swap="outerHTML">{{t "commun.enregistrer"}}</button>
+    <button type="button" class="bouton-discret bouton-petit"
+            hx-get="/tiers/{{.ID}}" hx-target="#tier-{{.ID}}" hx-swap="outerHTML">{{t "commun.annuler"}}</button>
+  </td>
+</tr>
+{{end}}

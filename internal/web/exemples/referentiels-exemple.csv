@@ -1,0 +1,19 @@
+type;code;libelle;ordre;site
+PROJET;LOGS;Plateforme de logs;;
+PROJET;STREAM;Flux d'événements;;
+ENVIRONNEMENT;PROD;Production;1;
+ENVIRONNEMENT;PREPROD;Pré-production;2;
+ENVIRONNEMENT;DEV;Développement;3;
+TECHNO;ELASTIC;Elasticsearch;;
+TECHNO;KAFKA;Kafka;;
+TECHNO;NOMAD;Nomad;;
+TECHNO;LOGSTASH;Logstash;;
+TECHNO;MINIO;MinIO;;
+TIER;HOT;Données chaudes;1;
+TIER;WARM;Données tièdes;2;
+TIER;COLD;Données froides;3;
+USAGE;INGEST;Ingestion;;
+USAGE;SEARCH;Recherche;;
+USAGE;BATCH;Traitement par lots;;
+ZONE;DC1;Zone 1;;Site A
+ZONE;DC2;Zone 2;;Site B

@@ -1,0 +1,162 @@
+{{/*
+Écran Catalogue des VLAN (backlog v3.1) — variante du patron projets (voir
+templates/projets/liste.html) :
+
+  - "vlans_page"           page complète (formulaire de création + tableau)
+  - "vlans_tableau"        le tableau, renvoyé entier par la création, la
+                             suppression et les mutations de plages
+  - "vlans_ligne"          une ligne en lecture, avec ses plages et le
+                             mini-formulaire d'ajout de plage
+  - "vlans_ligne_edition"  la même ligne en édition (hx-include="closest tr")
+  - "vlans_select_*"       un <select> de critère, partagé entre la création
+                             et l'édition ; contexte vlanLigne (XxxSel = 0
+                             quand le critère vaut « tous »)
+
+Les plages d'une ligne sont des <form> dans un <td> — valide en HTML, et
+sans conflit avec hx-include="closest tr" de la ligne d'édition, qui est un
+autre <tr>.
+*/}}
+
+{{define "vlans_select_projet"}}
+<select name="projet_id">
+  <option value="">{{t "vlans.tous_projets"}}</option>
+  {{range .Options.Projets}}<option value="{{.ID}}"{{if eq $.ProjetSel .ID}} selected{{end}}>{{.Code}}</option>{{end}}
+</select>
+{{end}}
+
+{{define "vlans_select_environnement"}}
+<select name="environnement_id">
+  <option value="">{{t "vlans.tous_environnements"}}</option>
+  {{range .Options.Environnements}}<option value="{{.ID}}"{{if eq $.EnvSel .ID}} selected{{end}}>{{.Code}}</option>{{end}}
+</select>
+{{end}}
+
+{{define "vlans_select_zone"}}
+<select name="zone_id">
+  <option value="">{{t "vlans.toutes_zones"}}</option>
+  {{range .Options.Zones}}<option value="{{.ID}}"{{if eq $.ZoneSel .ID}} selected{{end}}>{{.Code}}</option>{{end}}
+</select>
+{{end}}
+
+{{define "vlans_select_cluster"}}
+<select name="cluster_id">
+  <option value="">{{t "vlans.tous_clusters"}}</option>
+  {{range .Options.Clusters}}<option value="{{.ID}}"{{if eq $.ClusterSel .ID}} selected{{end}}>{{.Libelle}}</option>{{end}}
+</select>
+{{end}}
+
+{{define "vlans_page"}}
+<h1>{{t "nav.vlans"}}</h1>
+<p class="sous-titre">
+  {{t "vlans.sous_titre"}} <a href="/adressage/anomalies">{{t "nav.anomalies"}}</a>.
+</p>
+
+<form class="carte" style="margin-bottom:18px" hx-post="/vlans"
+      hx-target="#tableau-vlans" hx-swap="outerHTML">
+  <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+    <label style="flex:1; min-width:120px; margin:0;">{{t "commun.code"}}
+      <input type="text" name="code" required maxlength="40" placeholder="VL-PROD-DC1">
+    </label>
+    <label style="flex:1; min-width:140px; margin:0;">{{t "vlans.champ_projet"}}
+      {{template "vlans_select_projet" .Nouveau}}
+    </label>
+    <label style="flex:1; min-width:140px; margin:0;">{{t "vlans.champ_environnement"}}
+      {{template "vlans_select_environnement" .Nouveau}}
+    </label>
+    <label style="flex:1; min-width:120px; margin:0;">{{t "vlans.champ_zone"}}
+      {{template "vlans_select_zone" .Nouveau}}
+    </label>
+    <label style="flex:1; min-width:180px; margin:0;">{{t "vlans.champ_cluster"}}
+      {{template "vlans_select_cluster" .Nouveau}}
+    </label>
+    <label style="flex:2; min-width:200px; margin:0;">{{t "vlans.champ_commentaire"}}
+      <input type="text" name="commentaire" maxlength="500" placeholder="facultatif">
+    </label>
+    <button type="submit">{{t "commun.ajouter"}}</button>
+  </div>
+  <p class="sous-titre" style="margin:8px 0 0;">{{t "vlans.plages_note"}}</p>
+</form>
+
+{{template "vlans_tableau" .}}
+{{end}}
+
+{{define "vlans_tableau"}}
+<div id="tableau-vlans">
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+<div class="barre-outils" style="margin-bottom:6px;">{{template "export_boutons" .Export}}</div>
+<table>
+  <thead><tr>
+    <th>{{t "commun.code"}}</th><th>{{t "vlans.champ_projet"}}</th><th>{{t "vlans.champ_environnement"}}</th><th>{{t "vlans.champ_zone"}}</th><th>{{t "vlans.champ_cluster"}}</th>
+    <th>{{t "vlans.champ_plages"}}</th><th>{{t "vlans.champ_curseur"}}</th><th>{{t "vlans.champ_commentaire"}}</th><th></th>
+  </tr></thead>
+  <tbody>
+    {{range .Vlans}}{{template "vlans_ligne" .}}{{else}}
+    <tr><td colspan="9" class="vide">{{t "vlans.aucun_avant"}} <a href="/import/vlans">{{t "vlans.aucun_lien"}}</a>.</td></tr>
+    {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
+
+{{define "vlans_ligne"}}
+<tr id="vlan-{{.ID}}">
+  <td>{{.Code}}{{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}</td>
+  <td>{{if .Projet}}{{.Projet}}{{else}}<span class="vide">{{t "vlans.tous_projets"}}</span>{{end}}</td>
+  <td>{{if .Environnement}}{{.Environnement}}{{else}}<span class="vide">{{t "vlans.tous_environnements"}}</span>{{end}}</td>
+  <td>{{if .Zone}}{{.Zone}}{{else}}<span class="vide">{{t "vlans.toutes_zones"}}</span>{{end}}</td>
+  <td>{{if .Cluster}}{{.Cluster}}{{else}}<span class="vide">{{t "vlans.tous_clusters"}}</span>{{end}}</td>
+  <td>
+    {{range .Plages}}
+    <div style="white-space:nowrap;">
+      <code>{{.IPDebut}}–{{.IPFin}}</code>
+      <button class="bouton-discret bouton-petit" title="{{t "vlans.retirer_plage_titre"}}"
+              hx-delete="/vlans/{{.VlanID}}/plages/{{.ID}}" hx-confirm="{{t "vlans.confirmer_retirer_plage"}} {{.IPDebut}}–{{.IPFin}} ?"
+              hx-target="#tableau-vlans" hx-swap="outerHTML">×</button>
+    </div>
+    {{else}}<span class="vide">{{t "vlans.aucune_plage"}}</span>{{end}}
+    <form style="display:flex; gap:4px; align-items:center; margin-top:4px;"
+          hx-post="/vlans/{{.ID}}/plages" hx-target="#tableau-vlans" hx-swap="outerHTML">
+      <input type="text" name="ip_debut" placeholder="10.0.0.10" size="14" required>
+      –
+      <input type="text" name="ip_fin" placeholder="10.0.0.250" size="14" required>
+      <button type="submit" class="bouton-discret bouton-petit">{{t "commun.ajouter"}}</button>
+    </form>
+  </td>
+  <td><code>{{videSiNil .DerniereIP}}</code></td>
+  <td>{{videSiNil .Commentaire}}</td>
+  <td class="actions-ligne">
+    <button class="bouton-discret bouton-petit"
+            hx-get="/vlans/{{.ID}}/editer" hx-target="#vlan-{{.ID}}" hx-swap="outerHTML">{{t "commun.modifier"}}</button>
+    <button class="bouton-discret bouton-petit bouton-danger"
+            hx-delete="/vlans/{{.ID}}" hx-confirm="{{t "vlans.confirmer_supprimer_vlan"}} {{.Code}} {{t "vlans.confirmer_supprimer_vlan_suffixe"}}"
+            hx-target="#tableau-vlans" hx-swap="outerHTML">{{t "commun.supprimer"}}</button>
+  </td>
+</tr>
+{{end}}
+
+{{define "vlans_ligne_edition"}}
+<tr id="vlan-{{.ID}}">
+  <td>
+    <input type="text" name="code" value="{{.Code}}" required maxlength="40" size="12">
+    {{if .Erreur}}<div class="message-erreur">{{.Erreur}}</div>{{end}}
+  </td>
+  <td>{{template "vlans_select_projet" .}}</td>
+  <td>{{template "vlans_select_environnement" .}}</td>
+  <td>{{template "vlans_select_zone" .}}</td>
+  <td>{{template "vlans_select_cluster" .}}</td>
+  <td>
+    {{range .Plages}}<div><code>{{.IPDebut}}–{{.IPFin}}</code></div>{{else}}<span class="vide">{{t "vlans.aucune_plage"}}</span>{{end}}
+  </td>
+  <td>
+    <input type="text" name="derniere_ip" value="{{videSiNil .DerniereIP}}" size="14"
+           placeholder="vide = repartir du début" title="{{t "vlans.derniere_ip_titre"}}">
+  </td>
+  <td><input type="text" name="commentaire" value="{{videSiNil .Commentaire}}" maxlength="500"></td>
+  <td class="actions-ligne">
+    <button class="bouton-petit"
+            hx-put="/vlans/{{.ID}}" hx-include="closest tr" hx-target="#vlan-{{.ID}}" hx-swap="outerHTML">{{t "commun.enregistrer"}}</button>
+    <button type="button" class="bouton-discret bouton-petit"
+            hx-get="/vlans/{{.ID}}" hx-target="#vlan-{{.ID}}" hx-swap="outerHTML">{{t "commun.annuler"}}</button>
+  </td>
+</tr>
+{{end}}
