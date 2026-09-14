@@ -65,7 +65,7 @@ Le détail de chaque écran est dans le
 
 - Aucun, pour utiliser un binaire prêt à l'emploi (page *Releases* du dépôt :
   Linux x64, Windows x64, macOS arm64)
-- Go 1.22 ou plus, pour compiler soi-même
+- Go 1.26 ou plus, pour compiler soi-même
 - Python 3.8 ou plus (uniquement pour rejouer la spécification exécutable,
   pas nécessaire à l'exécution)
 - Aucune base de données à installer : SQLite est embarqué

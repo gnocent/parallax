@@ -60,7 +60,7 @@ The detail of every screen is in the
 
 - None, to use a ready-made binary (the repository's *Releases* page:
   Linux x64, Windows x64, macOS arm64)
-- Go 1.22 or later, to build it yourself
+- Go 1.26 or later, to build it yourself
 - Python 3.8 or later (only to replay the executable specification, not
   needed to run the application)
 - No database to install: SQLite is embedded

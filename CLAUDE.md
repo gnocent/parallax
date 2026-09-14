@@ -35,7 +35,7 @@ un `!!` signale un parcours de table entière — à corriger par un index
 
 ## Stack
 
-- **Go 1.22+**, un seul binaire autonome
+- **Go 1.26+** (directive `go` de `go.mod` ; le `ServeMux` à motifs date de 1.22), un seul binaire autonome
 - **SQLite** en WAL via `modernc.org/sqlite` — pilote Go pur, `CGO_ENABLED=0`.
   Un binaire compilé sous WSL2 tourne tel quel sur RHEL 8 : ne pas réintroduire cgo.
 - **HTMX** embarqué dans le binaire (pas de CDN : réseau cloisonné),
