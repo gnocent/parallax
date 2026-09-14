@@ -9,6 +9,10 @@ de départ mais ce qui rend ces calculs vérifiables : confronter un besoin
 calculé au parc réellement installé, sans jamais risquer les données
 réelles pendant qu'on teste une hypothèse.
 
+![Démonstration de Parallax : synthèse d'un scénario, besoin et offre par cluster, dimensionnement en lot, vue capacité](docs/demoparallax.gif)
+
+*Un tour de l'outil en quelques écrans — les données sont fictives.*
+
 ## Pourquoi
 
 Dans une grande entreprise, ce dimensionnement se fait presque toujours

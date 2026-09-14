@@ -9,6 +9,10 @@ calculations checkable: comparing a computed need against the fleet
 actually installed, without ever risking the real data while testing a
 hypothesis.
 
+![Parallax demo: scenario summary, need and supply per cluster, batch sizing, capacity view](docs/demoparallax.gif)
+
+*A tour of the tool in a few screens — the data is fictitious.*
+
 ## Why
 
 In a large organization, this sizing work is almost always done in a
