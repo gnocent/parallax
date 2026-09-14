@@ -2,6 +2,11 @@
 
 *Français · [English](README.en.md)*
 
+> **État : bêta (v0.7).** Fonctionnellement complet et couvert par des
+> tests, mais pas encore éprouvé sur un parc réel de grande taille ni sur
+> la durée. Le schéma peut encore évoluer, par migrations additives. Les
+> retours sont bienvenus via les *issues*.
+
 Capacity planning et gestion des hypothèses de dimensionnement — CPU, RAM,
 disque, licences — pour une équipe qui exploite des plateformes de données
 de grande envergure, on-premises. L'inventaire matériel n'est pas le point

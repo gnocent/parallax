@@ -252,9 +252,8 @@ et confirmation en deux temps, fichier gardé en mémoire entre les deux
 Le pipeline capacité (résolution de portée, règle limitante, écart) est
 vérifié sur un jeu de données de simulation à trois technologies, calculé
 indépendamment à la main — correspondance exacte. Ce n'est pas le jalon de
-recette v1.5 lui-même (qui compare aux vraies données, confidentielles,
-absentes de cet environnement) mais une preuve que le moteur fait ce qu'il
-prétend faire.
+recette v1.5 lui-même (qui se joue sur un inventaire réel, absent de ce
+dépôt) mais une preuve que le moteur fait ce qu'il prétend faire.
 
 Durci pour le déploiement : configuration par variables d'environnement
 (`PARALLAX_BASE`, `PARALLAX_ADRESSE`), arrêt propre sur SIGTERM/SIGINT,
@@ -311,13 +310,14 @@ pour les gestes composites) ; les handlers d'écriture utilisent
 `JournaliserCreation`. Le hash d'un compte n'entre jamais dans le journal.
 Une nouvelle méthode d'écriture sans journal est une régression.
 
-Suite : bascule sur le poste de travail réel — import des 1800 lignes
-existantes (v1.4), recette des formules contre l'Excel sur au moins trois
-clusters de technologies différentes (v1.5, jalon décisif). Puis v3
-(génération des demandes de matériel, licences, IP, LDAP, import
-incrémental) : chacun demande d'abord des faits que seul l'usage réel
-fournit (formats, formules, annuaire).
+Suite, pour qui déploie : reprise de l'inventaire existant (v1.4), recette
+des formules contre le tableur de référence sur au moins trois clusters de
+technologies différentes (v1.5, jalon décisif). Les lots v3 (génération des
+demandes de matériel, licences, IP, LDAP, import incrémental) ont chacun
+demandé d'abord des faits que seul l'usage réel fournit (formats,
+formules, annuaire).
 
-Jalon de recette de la v1 : les formules reproduisent les résultats de l'Excel
-actuel sur au moins trois clusters de technologies différentes. Un écart est une
-règle mal transcrite, pas une tolérance à accepter.
+Jalon de recette de la v1 : les formules reproduisent les résultats du
+tableur de référence sur au moins trois clusters de technologies
+différentes. Un écart est une règle mal transcrite, pas une tolérance à
+accepter.

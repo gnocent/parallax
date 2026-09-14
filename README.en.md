@@ -2,6 +2,11 @@
 
 *[Français](README.md) · English*
 
+> **Status: beta (v0.7).** Functionally complete and covered by tests,
+> but not yet proven on a large real fleet or over time. The schema may
+> still evolve, through additive migrations. Feedback is welcome through
+> the *issues*.
+
 Capacity planning and sizing-hypothesis management — CPU, RAM, disk,
 licenses — for a team operating large-scale, on-premises data platforms.
 The hardware inventory is not the starting point but what makes those
