@@ -284,23 +284,62 @@ func (s *serveur) calculerDeltaAffectations(clusterID int64, scenarioID int64, a
 // « ram_total » au niveau périmètre et « ram_machine » par serveur. C'est ce
 // qui permet à une règle PAR_SERVEUR de s'écrire ceil(ram_machine / ram_max).
 func (s *serveur) calculerBesoinOffre(cluster depot.Cluster, annee int, scenarioID *int64, aDate string) ([]ligneBesoinOffre, error) {
-	regles, err := s.depot.ReglesCapaciteActives(0)
+	ctx, err := s.chargerContexteBesoin(annee, scenarioID)
 	if err != nil {
 		return nil, err
 	}
+	return s.calculerBesoinOffreAvec(ctx, cluster, scenarioID, aDate)
+}
 
+// contexteBesoin est ce qui ne dépend pas du cluster dans un calcul besoin /
+// offre : règles actives, valeurs de variables de l'année (réel et scénario
+// confondus — capacity.ResoudreVariable ignore les surcharges de scénario
+// quand on calcule sur le réel) et défauts. Chargé une fois pour évaluer
+// tous les clusters d'un scénario (synthèse, lot).
+type contexteBesoin struct {
+	Annee   int
+	Regles  []capacity.Regle
+	Valeurs []capacity.ValeurVariable
+	Defauts map[string]float64
+}
+
+func (s *serveur) chargerContexteBesoin(annee int, scenarioID *int64) (contexteBesoin, error) {
+	regles, err := s.depot.ReglesCapaciteActives(0)
+	if err != nil {
+		return contexteBesoin{}, err
+	}
 	valeurs, err := s.chargerValeursAnnee(annee, scenarioID)
 	if err != nil {
-		return nil, err
+		return contexteBesoin{}, err
 	}
 	defauts, err := s.chargerDefautsVariables()
 	if err != nil {
-		return nil, err
+		return contexteBesoin{}, err
+	}
+	return contexteBesoin{Annee: annee, Regles: regles, Valeurs: valeurs, Defauts: defauts}, nil
+}
+
+func (s *serveur) calculerBesoinOffreAvec(ctx contexteBesoin, cluster depot.Cluster, scenarioID *int64, aDate string) ([]ligneBesoinOffre, error) {
+	lignes, _, err := s.besoinOffreCluster(ctx, cluster, scenarioID, aDate)
+	return lignes, err
+}
+
+// besoinOffreCluster est le calcul lui-même ; il renvoie aussi l'offre
+// installée par code de composant, règles ou pas — la vue capacité
+// (handlers_capacite.go) en a besoin pour les composants qu'aucune règle
+// ne vise sur ce cluster.
+func (s *serveur) besoinOffreCluster(ctx contexteBesoin, cluster depot.Cluster, scenarioID *int64, aDate string) ([]ligneBesoinOffre, map[string]float64, error) {
+	regles, valeurs, annee := ctx.Regles, ctx.Valeurs, ctx.Annee
+	// copie : les défauts sont complétés par cluster (composants présents),
+	// sans fuite d'un cluster au suivant.
+	defauts := make(map[string]float64, len(ctx.Defauts))
+	for k, v := range ctx.Defauts {
+		defauts[k] = v
 	}
 
 	serveurs, offreParCode, err := s.chargerOffreCluster(cluster.ID, scenarioID, aDate)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	// une variable par composant de code "x" existe potentiellement au
 	// périmètre ("x_total") et par serveur ("x_machine") : garantir une
@@ -327,7 +366,7 @@ func (s *serveur) calculerBesoinOffre(cluster depot.Cluster, annee int, scenario
 		Annee: annee, ScenarioID: scenarioID, Agregats: agregats, Serveurs: serveurs,
 	})
 	if err != nil {
-		return nil, erreurEvaluation{cause: err}
+		return nil, offreParCode, erreurEvaluation{cause: err}
 	}
 
 	lignes := make([]ligneBesoinOffre, len(besoins))
@@ -357,7 +396,7 @@ func (s *serveur) calculerBesoinOffre(cluster depot.Cluster, annee int, scenario
 	}
 
 	sort.Slice(lignes, func(i, j int) bool { return lignes[i].RegleID < lignes[j].RegleID })
-	return lignes, nil
+	return lignes, offreParCode, nil
 }
 
 // anneeDepuisRequete lit le paramètre "annee" en GET (query) comme en POST

@@ -1,0 +1,273 @@
+{{/*
+Synthèse d'un scénario et dimensionnement en lot (handlers_scenario_synthese.go).
+
+  - "scenario_synthese_page"  GET /scenarios/{id}/synthese : tous les clusters
+                                du scénario, avant (réel) / après (scénario)
+                                sur la règle limitante, mouvement de serveurs,
+                                coût des ajouts ; lien « Dimensionner » par
+                                ligne, lien vers la comparaison préréglée et
+                                vers le lot
+  - "scenario_lot_page"       GET /scenarios/{id}/lot : générations conservées
+                                (global), modèle candidat par tier puis par
+                                cluster, bouton Aperçu
+  - "scenario_lot_apercu"     fragment : ce que le lot poserait, cluster par
+                                cluster, et le bouton Matérialiser le lot
+
+Un seul <form id="lot"> : Aperçu (hx-get) et Matérialiser (hx-post) le
+reprennent avec hx-include. Les choix de modèle voyagent en champs
+multi-valeurs « <id>:<modèle> » (modele_tier, modele_cluster) — un nom fixe,
+que les liens d'export reprennent tels quels. Aucun nombre calculé n'est
+transmis : le serveur recalcule tout à la matérialisation.
+*/}}
+
+{{define "scenario_synthese_page"}}
+<p><a href="/scenarios">← {{t "scenarios.titre"}}</a></p>
+<h1>{{t "synthese.titre"}} — {{.Scenario.Nom}}</h1>
+<p class="sous-titre">
+  {{if eq .Scenario.Statut "ACTIF"}}<span class="badge badge-actif">{{t "commun.actif"}}</span>
+  {{else if eq .Scenario.Statut "ABANDONNE"}}<span class="badge badge-abandonne">{{t "scenarios.statut_abandonne"}}</span>
+  {{else if eq .Scenario.Statut "RETENU"}}<span class="badge badge-retenu">{{t "scenarios.statut_retenu"}}</span>
+  {{else}}<span class="badge">{{t "scenarios.statut_brouillon"}}</span>{{end}}
+  {{if .Scenario.ProjetLibelle}}{{.Scenario.ProjetLibelle}} —{{end}}
+  {{.Scenario.Description}}
+</p>
+<p class="sous-titre">
+  {{t "synthese.sous_titre"}} <strong>{{.DateOffre}}</strong>.
+  {{if .Scenario.ProjetLibelle}}{{t "synthese.perimetre_projet"}}{{else}}{{t "synthese.perimetre_tous"}}{{end}}
+  {{if not .Ouvert}}{{t "synthese.clos"}}{{end}}
+</p>
+
+<form method="get" class="filtres" style="margin-bottom:14px;">
+  <label style="margin:0; display:flex; align-items:center; gap:6px;">
+    {{t "simulation.champ_annee"}}
+    <input type="number" name="annee" value="{{.Annee}}" style="width:90px; margin:0;">
+  </label>
+  <button type="submit" class="bouton-discret">{{t "simulation.afficher"}}</button>
+  <span style="flex:1"></span>
+  <a class="bouton bouton-discret" href="{{.LienComparaison}}">{{t "scenarios.comparer"}} →</a>
+  {{if .Ouvert}}<a class="bouton" href="/scenarios/{{.Scenario.ID}}/lot?annee={{.Annee}}">{{t "scenarios.lot"}} →</a>{{end}}
+</form>
+
+<div class="carte">
+  <div class="barre-outils" style="margin-bottom:6px;">
+    <h2 style="margin:0">{{t "synthese.avant_apres"}} — {{.Annee}}</h2>
+    {{template "export_boutons" .Export}}
+  </div>
+  {{if not .Lignes}}
+  <p class="vide">{{t "synthese.aucun_cluster"}}</p>
+  {{else}}
+  <div style="overflow-x:auto;">
+  <table>
+    <thead>
+      <tr>
+        <th rowspan="2">{{t "simulation.champ_cluster"}}</th>
+        <th rowspan="2">{{t "synthese.regle"}}</th>
+        <th colspan="3" style="text-align:center">{{t "synthese.avant"}}</th>
+        <th colspan="3" style="text-align:center">{{t "synthese.apres"}}</th>
+        <th colspan="2" style="text-align:center">{{t "synthese.serveurs"}}</th>
+        <th rowspan="2">{{t "synthese.mouvement"}}</th>
+        <th rowspan="2">{{t "synthese.cout_acquisition"}}</th>
+        <th rowspan="2">{{t "synthese.cout_annuel"}}</th>
+        <th rowspan="2"></th>
+      </tr>
+      <tr>
+        <th>{{t "simulation.besoin"}}</th><th>{{t "synthese.offre"}}</th><th>{{t "synthese.ecart"}}</th>
+        <th>{{t "simulation.besoin"}}</th><th>{{t "synthese.offre"}}</th><th>{{t "synthese.ecart"}}</th>
+        <th>{{t "synthese.avant_court"}}</th><th>{{t "synthese.apres_court"}}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range .Lignes}}
+      <tr>
+        <td>
+          <strong>{{.Cluster.Nom}}</strong>
+          <div><small style="color:var(--texte-discret)">{{.TechnoLibelle}}{{if .TierLibelle}} · {{.TierLibelle}}{{end}}</small></div>
+        </td>
+        {{if .Erreur}}
+        <td colspan="6"><span class="message-erreur">{{.Erreur}}</span></td>
+        {{else if .SansRegle}}
+        <td colspan="6" class="vide">{{t "synthese.sans_regle"}}</td>
+        {{else}}
+        <td>{{.Regle}} <small><code>{{.Composant}}</code></small></td>
+        <td>{{formaterNombre .Avant.Besoin}}</td>
+        <td>{{formaterNombre .Avant.Offre}}</td>
+        <td class="{{if lt .Avant.Ecart 0.0}}ecart-negatif{{else}}ecart-positif{{end}}">{{formaterNombre .Avant.Ecart}}</td>
+        <td>{{formaterNombre .Apres.Besoin}}</td>
+        <td>{{formaterNombre .Apres.Offre}}</td>
+        <td class="{{if lt .Apres.Ecart 0.0}}ecart-negatif{{else}}ecart-positif{{end}}"><strong>{{formaterNombre .Apres.Ecart}}</strong></td>
+        {{end}}
+        <td>{{.NbAvant}}</td>
+        <td>{{.NbApres}}</td>
+        <td>{{if .Arrivees}}<span class="badge badge-actif">+{{.Arrivees}}</span>{{end}} {{if .Departs}}<span class="badge badge-inactif">−{{.Departs}}</span>{{end}}{{if and (not .Arrivees) (not .Departs)}}<span class="vide">—</span>{{end}}</td>
+        <td>{{formaterNombre .CoutAcquisition}}</td>
+        <td>{{formaterNombre .CoutAnnuel}}</td>
+        <td class="actions-ligne">
+          <a class="bouton bouton-discret bouton-petit" href="/clusters/{{.Cluster.ID}}/besoin-offre?annee={{$.Annee}}&scenario={{$.Scenario.ID}}">{{t "clusters.lien_besoin_offre"}}</a>
+          {{if $.Ouvert}}<a class="bouton {{if .Deficit}}{{else}}bouton-discret {{end}}bouton-petit" href="/clusters/{{.Cluster.ID}}/dimensionnement?annee={{$.Annee}}&scenario={{$.Scenario.ID}}">{{t "synthese.dimensionner"}}</a>{{end}}
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+    <tfoot>
+      <tr class="ligne-totale">
+        <td><strong>{{t "synthese.total"}}</strong></td>
+        <td colspan="7">{{if .Totaux.Deficits}}<span class="ecart-negatif">{{.Totaux.Deficits}} {{t "synthese.deficits"}}</span>{{else}}<span class="ecart-positif">{{t "synthese.aucun_deficit"}}</span>{{end}}</td>
+        <td><strong>{{.Totaux.NbAvant}}</strong></td>
+        <td><strong>{{.Totaux.NbApres}}</strong></td>
+        <td>{{if .Totaux.Arrivees}}<span class="badge badge-actif">+{{.Totaux.Arrivees}}</span>{{end}} {{if .Totaux.Departs}}<span class="badge badge-inactif">−{{.Totaux.Departs}}</span>{{end}}</td>
+        <td><strong>{{formaterNombre .Totaux.CoutAcquisition}}</strong></td>
+        <td><strong>{{formaterNombre .Totaux.CoutAnnuel}}</strong></td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+  </div>
+  {{end}}
+</div>
+{{end}}
+
+{{define "scenario_lot_page"}}
+<p><a href="/scenarios/{{.Scenario.ID}}/synthese?annee={{.Annee}}">← {{t "synthese.titre"}} — {{.Scenario.Nom}}</a></p>
+<h1>{{t "lot.titre"}} — {{.Scenario.Nom}}</h1>
+<p class="sous-titre">{{t "lot.sous_titre"}}</p>
+
+{{if not .Ouvert}}
+<p class="message-erreur">{{t "lot.clos"}}</p>
+{{else}}
+<form method="get" class="filtres" style="margin-bottom:14px;">
+  <label style="margin:0; display:flex; align-items:center; gap:6px;">{{t "simulation.champ_annee"}}
+    <input type="number" name="annee" value="{{.Annee}}" style="width:90px; margin:0;">
+  </label>
+  <button type="submit" class="bouton-discret">{{t "simulation.afficher"}}</button>
+</form>
+
+<form id="lot">
+  <input type="hidden" name="annee" value="{{.Annee}}">
+
+  <div class="carte" style="margin-bottom:18px;">
+    <h2 style="margin-top:0">{{t "lot.conserves_titre"}} — {{.NbInstalles}} {{t "simulation.serveurs_parens"}} {{t "clusters.dimensionnement.parc_installe_avant"}} {{.DateOffre}}</h2>
+    {{if not .Generations}}
+    <p class="vide">{{t "clusters.dimensionnement.aucun_serveur"}}</p>
+    {{else}}
+    <div style="display:flex; gap:14px; flex-wrap:wrap;">
+      {{range .Generations}}
+      <label style="display:flex; align-items:center; gap:4px; margin:0;">
+        <input type="checkbox" name="conserver" value="{{.ModeleID}}" {{if .Conservee}}checked{{end}} style="width:auto">
+        {{.Code}} <small style="color:var(--texte-discret)">({{.Nb}})</small>
+      </label>
+      {{end}}
+    </div>
+    <p class="sous-titre" style="margin-bottom:0;">{{t "lot.conserves_aide"}}</p>
+    {{end}}
+  </div>
+
+  <div class="carte" style="margin-bottom:18px;">
+    <h2 style="margin-top:0">{{t "lot.modele_par_tier"}}</h2>
+    {{if not .Modeles}}
+    <p class="vide">{{t "clusters.dimensionnement.candidats_aucun"}}</p>
+    {{else}}
+    <div style="display:flex; gap:14px; flex-wrap:wrap;">
+      {{range .Tiers}}
+      <label style="margin:0; min-width:180px;">{{if .Libelle}}{{.Libelle}}{{else}}{{t "lot.sans_tier"}}{{end}}
+        <select name="modele_tier">
+          <option value="">—</option>
+          {{$tier := .ID}}{{range $.Modeles}}<option value="{{$tier}}:{{.ID}}">{{.Code}}</option>{{end}}
+        </select>
+      </label>
+      {{end}}
+    </div>
+    <p class="sous-titre" style="margin-bottom:0;">{{t "clusters.dimensionnement.candidats_titre"}}</p>
+    {{end}}
+  </div>
+
+  <div class="carte" style="margin-bottom:18px;">
+    <h2 style="margin-top:0">{{t "lot.modele_par_cluster"}}</h2>
+    {{if not .Clusters}}
+    <p class="vide">{{t "synthese.aucun_cluster"}}</p>
+    {{else}}
+    <table>
+      <thead><tr><th>{{t "simulation.champ_cluster"}}</th><th>{{t "simulation.champ_tier"}}</th><th>{{t "lot.installes"}}</th><th>{{t "clusters.dimensionnement.modele"}}</th></tr></thead>
+      <tbody>
+        {{range .Clusters}}
+        <tr>
+          <td><strong>{{.Nom}}</strong></td>
+          <td>{{if .TierLibelle}}{{.TierLibelle}}{{else}}<span class="vide">—</span>{{end}}</td>
+          <td>{{.NbInstalles}}</td>
+          <td>
+            <select name="modele_cluster" style="margin:0;">
+              <option value="">{{t "lot.selon_tier"}}</option>
+              {{$cluster := .ID}}{{range $.Modeles}}<option value="{{$cluster}}:{{.ID}}">{{.Code}}</option>{{end}}
+            </select>
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    {{end}}
+  </div>
+
+  <button type="button" hx-get="/scenarios/{{.Scenario.ID}}/lot/apercu"
+          hx-include="#lot" hx-target="#apercu" hx-swap="innerHTML">{{t "lot.apercu"}}</button>
+</form>
+
+<div id="apercu" style="margin-top:18px;"><p class="vide">{{t "lot.choisissez"}}</p></div>
+{{end}}
+{{end}}
+
+{{define "scenario_lot_apercu"}}
+{{if .Erreur}}<p class="message-erreur">{{.Erreur}}</p>{{end}}
+{{if not .Lignes}}
+<p class="vide">{{t "synthese.aucun_cluster"}}</p>
+{{else}}
+<div class="barre-outils" style="margin-bottom:6px;">
+  <p class="sous-titre" style="margin:0">
+    {{t "lot.total_avant"}} <strong>{{.Totaux.Clusters}}</strong> {{t "lot.total_clusters"}}
+    <strong>{{.Totaux.AAjouter}}</strong> {{t "lot.total_ajouter"}}
+    <strong>{{.Totaux.ARetirer}}</strong> {{t "lot.total_retirer"}}
+    {{t "clusters.dimensionnement.cout_acquisition"}} {{formaterNombre .Totaux.CoutAcquisition}},
+    {{t "clusters.dimensionnement.cout_annuel"}} {{formaterNombre .Totaux.CoutAnnuel}}.
+  </p>
+  {{template "export_boutons" .Export}}
+</div>
+<table>
+  <thead><tr>
+    <th>{{t "simulation.champ_cluster"}}</th><th>{{t "clusters.dimensionnement.modele"}}</th>
+    <th>{{t "clusters.dimensionnement.a_ajouter"}}</th><th>{{t "clusters.dimensionnement.par_zone"}}</th>
+    <th>{{t "clusters.dimensionnement.regle_limitante"}}</th>
+    <th>{{t "clusters.dimensionnement.conserve_header"}}</th><th>{{t "clusters.dimensionnement.resultat_a_retirer_header"}}</th>
+    <th>{{t "clusters.dimensionnement.cout_acquisition"}}</th><th>{{t "clusters.dimensionnement.cout_annuel"}}</th>
+  </tr></thead>
+  <tbody>
+    {{range .Lignes}}
+    <tr {{if not .Actionnable}}style="color:var(--texte-discret)"{{end}}>
+      <td><strong>{{.Cluster.Nom}}</strong>{{if .TierLibelle}} <small>{{.TierLibelle}}</small>{{end}}</td>
+      {{if .SansModele}}
+      <td colspan="8" class="vide">{{t "lot.sans_modele"}}</td>
+      {{else if .Erreur}}
+      <td>{{.Modele}}</td>
+      <td colspan="7"><span class="message-erreur">{{.Erreur}}</span></td>
+      {{else}}
+      <td>{{.Modele}} <small>{{t "clusters.dimensionnement.rev"}} {{.Candidat.RevisionNumero}}</small>{{if .RienAFaire}}<div><small>{{t "lot.rien_a_faire"}}</small></div>{{end}}</td>
+      <td><strong>{{.Candidat.NbServeurs}}</strong></td>
+      <td>{{.Candidat.ParZoneTexte}}</td>
+      <td>{{.Candidat.RegleLimitante}} <small><code>{{.Candidat.ComposantLimitant}}</code></small></td>
+      <td>{{.NbConserves}}</td>
+      <td>{{.NbRetires}}</td>
+      <td>{{formaterNombre .Candidat.CoutAcquisition}}</td>
+      <td>{{formaterNombre .Candidat.CoutAnnuel}}</td>
+      {{end}}
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+{{if .Totaux.Clusters}}
+<div style="margin-top:12px;">
+  <button hx-post="/scenarios/{{.Scenario.ID}}/lot/materialiser" hx-include="#lot"
+          hx-target="#apercu" hx-swap="innerHTML"
+          hx-confirm="{{t "lot.confirmer_avant"}} {{.Totaux.AAjouter}} {{t "simulation.serveurs_parens"}} {{t "lot.confirmer_sur"}} {{.Totaux.Clusters}} {{t "lot.confirmer_clusters"}} {{.Totaux.ARetirer}} {{t "simulation.serveurs_parens"}} {{t "lot.confirmer_fin"}}">{{t "lot.materialiser"}}</button>
+</div>
+{{else}}
+<p class="vide" style="margin-top:12px;">{{t "lot.aucun_actionnable"}}</p>
+{{end}}
+{{end}}
+{{end}}

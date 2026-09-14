@@ -48,10 +48,10 @@ func TestImportServeursRefuseLesDoublonsDeNom(t *testing.T) {
 // remet le compteur à zéro.
 func TestFreinConnexion(t *testing.T) {
 	serveur, _ := serveurDeTest(t)
-	freinConnexion.succes("gnocent") // état propre, le frein est global au paquet
+	freinConnexion.succes("editeur") // état propre, le frein est global au paquet
 	client := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	poster := func(mdp string) int {
-		rep, err := client.PostForm(serveur.URL+"/connexion", url.Values{"login": {"gnocent"}, "mot_de_passe": {mdp}})
+		rep, err := client.PostForm(serveur.URL+"/connexion", url.Values{"login": {"editeur"}, "mot_de_passe": {mdp}})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -66,7 +66,7 @@ func TestFreinConnexion(t *testing.T) {
 	if code := poster("s3cret!"); code != http.StatusTooManyRequests {
 		t.Fatalf("après %d échecs, même le bon mot de passe doit être freiné (429), obtenu %d", seuilEchecsConnexion, code)
 	}
-	freinConnexion.succes("gnocent")
+	freinConnexion.succes("editeur")
 	if code := poster("s3cret!"); code != http.StatusSeeOther {
 		t.Fatalf("compteur remis à zéro : connexion attendue (303), obtenu %d", code)
 	}

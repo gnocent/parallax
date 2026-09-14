@@ -8,6 +8,32 @@ reprennent le découpage fonctionnel du projet, du plus récent au plus ancien.
 
 ## v3 — Confort et automatisations
 
+**Vue capacité.** Un écran qui confronte besoin et capacité installée sur
+tout le parc : en lignes, les clusters regroupés selon les axes usuels
+(projet, environnement, techno, tier, usage, cluster) ; en colonnes,
+chaque composant visé par une règle, avec deux sous-colonnes besoin / capa
+— sous le réel ou un scénario, pour une année, ou en projection
+pluriannuelle avec l'axe « année ». Exportable. Dans le même mouvement,
+l'axe « année du modèle » (génération) rejoint le constructeur de vues et
+la comparaison, et tous les tableaux à axes fusionnent verticalement les
+cellules de même valeur — une vraie vue hiérarchique. Les axes se
+choisissent désormais par étiquettes (clic ou glisser-déposer,
+réordonnables, jusqu'à six) et les en-têtes de colonnes se trient au clic,
+à l'intérieur de chaque groupe parent. Les colonnes affichées se
+choisissent de la même façon, dans l'ordre voulu ; par défaut : serveurs,
+cœurs, RAM, HDD, SSD, nœuds.
+
+**Synthèse de scénario et dimensionnement en lot.** Un scénario a
+désormais une page d'accueil : tous ses clusters avec, pour chacun, la
+règle limitante et ses chiffres avant (réel) et après (scénario), les
+arrivées et départs de serveurs et le coût des ajouts — les clusters
+encore en déficit ressortent, avec le lien « Dimensionner » direct. Un
+raccourci ouvre la comparaison déjà réglée (réel contre ce scénario, par
+cluster, serveurs, coûts, licences). Le dimensionnement en lot enchaîne
+le dimensionnement inverse sur tous les clusters d'un coup : générations
+conservées choisies une fois, modèle candidat par tier ou par cluster,
+aperçu ligne par ligne, puis matérialisation en une seule transaction.
+
 **Sauvegarde locale automatique.** Une copie de la base s'écrit chaque jour
 sur le disque, à l'heure réglée depuis l'écran Sauvegarde — mais seulement
 si quelque chose a changé depuis la précédente, pour ne jamais accumuler de

@@ -34,7 +34,7 @@ func serveurDeTest(t *testing.T) (*httptest.Server, *depot.Depot) {
 		t.Fatal(err)
 	}
 	if _, err := d.CreerUtilisateur(depot.Utilisateur{
-		Login: "gnocent", Hash: hash, Role: depot.RoleEditeur,
+		Login: "editeur", Hash: hash, Role: depot.RoleEditeur,
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -57,7 +57,7 @@ func clientConnecte(t *testing.T, serveur *httptest.Server) *http.Client {
 	}}
 
 	rep, err := client.PostForm(serveur.URL+"/connexion", url.Values{
-		"login": {"gnocent"}, "mot_de_passe": {"s3cret!"},
+		"login": {"editeur"}, "mot_de_passe": {"s3cret!"},
 	})
 	if err != nil {
 		t.Fatalf("connexion : %v", err)
@@ -82,7 +82,7 @@ func corps(t *testing.T, rep *http.Response) string {
 func TestConnexionEchecIdentifiants(t *testing.T) {
 	serveur, _ := serveurDeTest(t)
 	rep, err := http.PostForm(serveur.URL+"/connexion", url.Values{
-		"login": {"gnocent"}, "mot_de_passe": {"mauvais"},
+		"login": {"editeur"}, "mot_de_passe": {"mauvais"},
 	})
 	if err != nil {
 		t.Fatal(err)

@@ -42,7 +42,7 @@ func TestPerformanceDixAns(t *testing.T) {
 
 	d := depot.Nouveau(base)
 	hash, _ := auth.HacherMotDePasse("s3cret!")
-	if _, err := d.CreerUtilisateur(depot.Utilisateur{Login: "gnocent", Hash: hash, Role: depot.RoleAdmin}); err != nil {
+	if _, err := d.CreerUtilisateur(depot.Utilisateur{Login: "editeur", Hash: hash, Role: depot.RoleAdmin}); err != nil {
 		t.Fatal(err)
 	}
 	serveur := httptest.NewServer(Nouveau(d, auth.NouveauService(d)))

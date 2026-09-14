@@ -17,7 +17,7 @@ import (
 // serveurDemandesDeTest construit un serveur de test sur le modèle de
 // serveurImportModelesDeTest : routes communes d'authentification plus les
 // deux groupes de cet écran (routesDemandes, routesParametres), que server.go
-// ne câble pas encore. Le compte gnocent est ADMIN : l'édition du gabarit
+// ne câble pas encore. Le compte editeur est ADMIN : l'édition du gabarit
 // l'exige, et ADMIN couvre aussi les écritures d'éditeur.
 func serveurDemandesDeTest(t *testing.T) (*httptest.Server, *depot.Depot) {
 	t.Helper()
@@ -34,7 +34,7 @@ func serveurDemandesDeTest(t *testing.T) (*httptest.Server, *depot.Depot) {
 		t.Fatal(err)
 	}
 	if _, err := d.CreerUtilisateur(depot.Utilisateur{
-		Login: "gnocent", Hash: hash, Role: depot.RoleAdmin,
+		Login: "editeur", Hash: hash, Role: depot.RoleAdmin,
 	}); err != nil {
 		t.Fatal(err)
 	}

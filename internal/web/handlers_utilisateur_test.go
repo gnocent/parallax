@@ -12,7 +12,7 @@ import (
 
 func TestUtilisateursReserveAuxAdmins(t *testing.T) {
 	serveur, d := serveurDeTest(t)
-	// serveurDeTest crée "gnocent" en EDITEUR ; on vérifie le refus d'accès
+	// serveurDeTest crée "editeur" en EDITEUR ; on vérifie le refus d'accès
 	client := clientConnecte(t, serveur)
 
 	rep, err := client.Get(serveur.URL + "/utilisateurs")

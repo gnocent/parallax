@@ -204,6 +204,25 @@ managed: a minimum number of servers, a required multiple, a
 distribution across availability zones — rules that complement the pure
 capacity calculation, and that apply to reverse sizing (next section).
 
+**The capacity view** ("Simulation" menu → **Capacity**) gives the same
+comparison across the whole fleet at once: in rows, clusters grouped by
+the chosen axes (project, environment, technology, tier, usage, cluster —
+up to three); in columns, each component targeted by an active rule, with
+two sub-columns, *need* and *capa*, the capa shown in red when it is below
+the need. For a given year, under real data or a scenario. Per cluster and
+per component, the retained need is the largest of the needs of the rules
+targeting that component (two rules on the same component are competing
+constraints, not additive); the clusters of a group then add up. A cluster
+whose rule cannot be evaluated is flagged above the table: its capacity
+counts, its need does not. The **Year** axis turns it into a multi-year
+projection: enter a range (2026 to 2030, ten years at most) and each year
+becomes a row, recomputed with its own variables and the supply read as of
+its December 31 — without this axis, only the first year counts. When
+several axes are chosen, axis cells with the same value are merged
+vertically: the table reads as a hierarchy. Axes are chosen with tags
+and the headers (clusters, servers, need and capa of each component)
+sort on click, as in the view builder.
+
 ## 9. Scenarios: simulating without breaking anything
 
 "Simulation" menu → **Scenarios**. A scenario has a name, a description
@@ -233,6 +252,17 @@ Every screen that displays a state of the fleet (views, need/supply,
 comparison) accepts being placed under a scenario, exactly as under
 reality.
 
+**The summary** ("Summary" button on each row) is a scenario's home page:
+a table of all its clusters — those of its project, or all of them if it
+has none — with, for each one, the limiting rule and its figures *before*
+(real data) and *after* (scenario), the server movements (arrivals,
+departures) and the cost of the added servers. Clusters still in deficit
+under the scenario stand out, with a direct "Size" link. Two shortcuts at
+the top of the page: **Compare with real data** opens the comparison
+(§11) already configured — real data against this scenario, per cluster,
+number of servers, costs and licenses — and **Batch sizing** leads to
+processing all clusters at once (§10).
+
 ## 10. Reverse sizing
 
 From a cluster's record, under a scenario: starting from a target need
@@ -253,6 +283,17 @@ cluster, spread across the availability zones; installed servers that
 are not kept are removed from the cluster within that same scenario. The
 result is immediately visible in the delta on the need/supply screen.
 
+**In batch.** From a scenario's summary, "Batch sizing" applies the same
+mechanics to all its clusters at once: choose once the **kept
+generations** (all checked = reinforcement, none checked = full renewal),
+then a **candidate model per tier** — and, if needed, a model specific to
+a cluster, which takes precedence. The **preview** shows, cluster by
+cluster, what would be placed (servers to add, limiting rule, servers
+removed, costs) and flags those that will be left aside: no model chosen,
+or nothing to do. **Materialize the batch** places everything in a single
+transaction — all or nothing — and returns to the summary, where the
+before / after immediately shows the result.
+
 ## 11. Comparing two scenarios
 
 "Simulation" menu → **Comparison**. Two scenarios (or a scenario and
@@ -268,9 +309,10 @@ tables:
 - free, ordered **grouping axes** (project, environment, technology,
   tier, usage, cluster, zone, model, server status…);
 - multiple-choice **filters** on each of these dimensions;
-- **aggregated columns** to choose from: number of servers, cores, RAM,
-  disks (HDD/SSD kept separate), network, GPU, nodes, costs, license
-  units and cost.
+- **displayed columns** to choose from, with tags like the axes and in
+  the desired order: number of servers, cores, RAM, disks (HDD/SSD kept
+  separate), network, GPU, nodes, costs, license units and cost. By
+  default: servers, cores, RAM, HDD, SSD, nodes.
 
 A view is built as of a date of one's choosing (today by default) and
 under a scenario of one's choosing. It can be saved to find again later,
@@ -279,6 +321,18 @@ shared with other users, and exported to CSV or Excel.
 When a license column is requested without technology being a grouping
 axis, Parallax automatically adds that axis: licenses from different
 technologies are never totaled together.
+
+Axes are chosen with **tags**: click or drag a tag into the zone to add
+it as the last axis, drag within the zone to reorder, click a tag in the
+zone to remove it — up to six axes. Among them, **Model year** groups by
+generation (the annual order: DENSE-2025 → 2025), all types combined.
+With several axes, axis cells with the same value are merged vertically
+— a true hierarchical view, in views as in the comparison; exports stay
+flat (repeated values), to remain usable in a spreadsheet. Clicking a
+value column's header **sorts** (ascending, then descending) — within
+each parent group, so the hierarchy stays readable; with a single axis,
+it is a full sort. The sort is carried over by "Generate" and by the
+exports.
 
 ## 13. Hardware requests
 

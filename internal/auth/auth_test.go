@@ -56,19 +56,19 @@ func TestHacherEtVerifierMotDePasse(t *testing.T) {
 
 func TestAuthentifierLocal(t *testing.T) {
 	d := depotDeTest(t)
-	utilisateurDeTest(t, d, "gnocent", "s3cret!", depot.RoleAdmin)
+	utilisateurDeTest(t, d, "editeur", "s3cret!", depot.RoleAdmin)
 
 	a := NouvelAuthenticatorLocal(d)
 
-	id, err := a.Authentifier("gnocent", "s3cret!")
+	id, err := a.Authentifier("editeur", "s3cret!")
 	if err != nil {
 		t.Fatalf("authentification valide refusée : %v", err)
 	}
-	if id.Role != depot.RoleAdmin || id.Login != "gnocent" {
+	if id.Role != depot.RoleAdmin || id.Login != "editeur" {
 		t.Fatalf("identité inattendue : %+v", id)
 	}
 
-	if _, err := a.Authentifier("gnocent", "mauvais"); !errors.Is(err, ErrIdentifiantsInvalides) {
+	if _, err := a.Authentifier("editeur", "mauvais"); !errors.Is(err, ErrIdentifiantsInvalides) {
 		t.Fatalf("mauvais mot de passe : attendu ErrIdentifiantsInvalides, obtenu %v", err)
 	}
 	if _, err := a.Authentifier("inconnu", "peu importe"); !errors.Is(err, ErrIdentifiantsInvalides) {
@@ -89,10 +89,10 @@ func TestAuthentifierCompteInactif(t *testing.T) {
 
 func TestServiceCycleSession(t *testing.T) {
 	d := depotDeTest(t)
-	utilisateurDeTest(t, d, "gnocent", "s3cret!", depot.RoleEditeur)
+	utilisateurDeTest(t, d, "editeur", "s3cret!", depot.RoleEditeur)
 	svc := NouveauService(d)
 
-	session, identite, err := svc.Connecter("gnocent", "s3cret!")
+	session, identite, err := svc.Connecter("editeur", "s3cret!")
 	if err != nil {
 		t.Fatalf("connexion : %v", err)
 	}
@@ -107,7 +107,7 @@ func TestServiceCycleSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("session courante : %v", err)
 	}
-	if relue.UtilisateurID != identite.UtilisateurID || identiteRelue.Login != "gnocent" {
+	if relue.UtilisateurID != identite.UtilisateurID || identiteRelue.Login != "editeur" {
 		t.Fatalf("session/identité relues incohérentes : %+v / %+v", relue, identiteRelue)
 	}
 
@@ -121,7 +121,7 @@ func TestServiceCycleSession(t *testing.T) {
 
 func TestSessionExpiration(t *testing.T) {
 	d := depotDeTest(t)
-	u := utilisateurDeTest(t, d, "gnocent", "s3cret!", depot.RoleLecteur)
+	u := utilisateurDeTest(t, d, "editeur", "s3cret!", depot.RoleLecteur)
 	g := NouveauGestionnaireSessions(d.Base())
 
 	s, err := g.Ouvrir(u.ID)
@@ -146,10 +146,10 @@ func TestSessionExpiration(t *testing.T) {
 
 func TestSessionInvalideeSiCompteDesactive(t *testing.T) {
 	d := depotDeTest(t)
-	u := utilisateurDeTest(t, d, "gnocent", "s3cret!", depot.RoleLecteur)
+	u := utilisateurDeTest(t, d, "editeur", "s3cret!", depot.RoleLecteur)
 	svc := NouveauService(d)
 
-	session, _, err := svc.Connecter("gnocent", "s3cret!")
+	session, _, err := svc.Connecter("editeur", "s3cret!")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -81,8 +81,8 @@ func TestImportMajServeurs(t *testing.T) {
 		t.Fatalf("mise à jour attendue (hostname, commentaire effacé, zone, statut, nom physique intact) : %+v", apres)
 	}
 	journal, _ := d.ListerJournal(depot.FiltreJournal{Entite: "serveur", EntiteID: &s1.ID})
-	if len(journal) < 2 || journal[0].UtilisateurLogin == nil || *journal[0].UtilisateurLogin != "gnocent" {
-		t.Fatalf("les modifications doivent être journalisées au nom de gnocent : %+v", journal)
+	if len(journal) < 2 || journal[0].UtilisateurLogin == nil || *journal[0].UtilisateurLogin != "editeur" {
+		t.Fatalf("les modifications doivent être journalisées au nom de editeur : %+v", journal)
 	}
 
 	// 2. clé hostname : réaffectation datée et changement de modèle.

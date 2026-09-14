@@ -76,6 +76,8 @@ func (s *serveur) routes() {
 	s.routesVariables()
 	s.routesRegles()
 	s.routesScenarios()
+	s.routesScenarioSynthese()
+	s.routesCapacite()
 	// v3
 	s.routesDemandes()
 	s.routesParametres()

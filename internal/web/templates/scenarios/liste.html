@@ -97,6 +97,7 @@ est un état terminal, sans aucune action de ligne.
   </td>
   <td>{{.DateCreation}}</td>
   <td class="actions-ligne">
+    <a class="bouton bouton-petit" href="/scenarios/{{.ID}}/synthese" title="{{t "scenarios.synthese_aide"}}">{{t "scenarios.synthese"}}</a>
     {{if eq .Statut "BROUILLON"}}
     <button class="bouton-discret bouton-petit"
             hx-post="/scenarios/{{.ID}}/activer" hx-target="#scenario-{{.ID}}" hx-swap="outerHTML">{{t "scenarios.activer"}}</button>

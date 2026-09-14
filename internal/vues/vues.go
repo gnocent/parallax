@@ -18,6 +18,7 @@ import (
 	"database/sql"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"parallax/internal/depot"
@@ -35,6 +36,7 @@ const (
 	DimCluster       Dimension = "cluster"
 	DimZone          Dimension = "zone"
 	DimModele        Dimension = "modele"
+	DimAnneeModele   Dimension = "annee_modele" // génération : l'année de la commande annuelle, tous types confondus
 	DimStatutServeur Dimension = "statut"
 )
 
@@ -42,7 +44,7 @@ const (
 // d'affichage proposé à l'utilisateur.
 var Dimensions = []Dimension{
 	DimProjet, DimEnvironnement, DimTechno, DimTier, DimUsage,
-	DimCluster, DimZone, DimModele, DimStatutServeur,
+	DimCluster, DimZone, DimModele, DimAnneeModele, DimStatutServeur,
 }
 
 // LibelleDimension renvoie le libellé français d'une dimension, pour les
@@ -65,6 +67,8 @@ func LibelleDimension(d Dimension) string {
 		return "Zone"
 	case DimModele:
 		return "Modèle"
+	case DimAnneeModele:
+		return "Année du modèle"
 	case DimStatutServeur:
 		return "Statut serveur"
 	default:
@@ -91,6 +95,7 @@ type Ligne struct {
 	ClusterNom        string
 	ZoneCode          string
 	ModeleCode        string
+	AnneeModele       string // "2025" ; vide sans révision rattachée
 
 	// Quantites et Capacites sont indexées par code de composant de la
 	// révision rattachée (depot.ComposantsCanoniques, mais tout code présent
@@ -132,6 +137,8 @@ func (l Ligne) Valeur(d Dimension) string {
 		return l.ZoneCode
 	case DimModele:
 		return l.ModeleCode
+	case DimAnneeModele:
+		return l.AnneeModele
 	case DimStatutServeur:
 		return l.Statut
 	default:
@@ -144,7 +151,7 @@ SELECT
     s.id, s.statut, c.techno_id, c.id,
     COALESCE(pr.code, ''), COALESCE(env.code, ''), COALESCE(tech.code, ''),
     COALESCE(tier.code, ''), COALESCE(usg.code, ''), COALESCE(c.nom, ''),
-    COALESCE(dc.code, ''), COALESCE(m.code, ''),
+    COALESCE(dc.code, ''), COALESCE(m.code, ''), COALESCE(m.annee, 0),
     COALESCE(mn.nb_noeuds, 0),
     COALESCE(m.prix_fournisseur_ht, 0), COALESCE(m.cout_annuel_ht, 0)
 FROM serveur s
@@ -254,10 +261,14 @@ func chargerLignesSeau(base *sql.DB, scenarioID *int64, aDate string) (map[int64
 	out := map[int64]Ligne{}
 	for lignes.Next() {
 		l := Ligne{Quantites: map[string]float64{}, Capacites: map[string]float64{}}
+		var anneeModele int64
 		if err := lignes.Scan(&l.ServeurID, &l.Statut, &l.TechnoID, &l.ClusterID, &l.ProjetCode, &l.EnvironnementCode,
 			&l.TechnoCode, &l.TierCode, &l.UsageCode, &l.ClusterNom, &l.ZoneCode,
-			&l.ModeleCode, &l.NbNoeuds, &l.PrixFournisseur, &l.CoutAnnuel); err != nil {
+			&l.ModeleCode, &anneeModele, &l.NbNoeuds, &l.PrixFournisseur, &l.CoutAnnuel); err != nil {
 			return nil, fmt.Errorf("chargement du parc courant : %w", err)
+		}
+		if anneeModele > 0 {
+			l.AnneeModele = strconv.FormatInt(anneeModele, 10)
 		}
 		out[l.ServeurID] = l
 	}

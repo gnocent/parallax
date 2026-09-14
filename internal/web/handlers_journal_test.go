@@ -16,7 +16,7 @@ import (
 // historique d'une fiche la retrouve.
 func TestJournalPorteLAuteurDesEcrituresWeb(t *testing.T) {
 	serveur, d := serveurDeTest(t)
-	client := clientConnecte(t, serveur) // gnocent, éditeur
+	client := clientConnecte(t, serveur) // editeur, éditeur
 	jetonCSRF := jetonCSRFDepuisPage(t, client, serveur, "/projets")
 
 	req, err := http.NewRequest(http.MethodPost, serveur.URL+"/projets",
@@ -39,8 +39,8 @@ func TestJournalPorteLAuteurDesEcrituresWeb(t *testing.T) {
 		t.Fatalf("attendu une entrée projet dans le journal, obtenu %d (%v)", len(entrees), err)
 	}
 	e := entrees[0]
-	if e.Action != depot.ActionCreation || e.UtilisateurLogin == nil || *e.UtilisateurLogin != "gnocent" {
-		t.Fatalf("l'entrée doit être une création signée gnocent : %+v", e)
+	if e.Action != depot.ActionCreation || e.UtilisateurLogin == nil || *e.UtilisateurLogin != "editeur" {
+		t.Fatalf("l'entrée doit être une création signée editeur : %+v", e)
 	}
 	if e.Apres == nil || !strings.Contains(*e.Apres, `"Code":"LOGS"`) {
 		t.Fatalf("état après attendu avec le code du projet : %+v", e)
@@ -51,7 +51,7 @@ func TestJournalPorteLAuteurDesEcrituresWeb(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if frag := corps(t, repHist); repHist.StatusCode != http.StatusOK || !strings.Contains(frag, "gnocent") || !strings.Contains(frag, "CREATION") {
+	if frag := corps(t, repHist); repHist.StatusCode != http.StatusOK || !strings.Contains(frag, "editeur") || !strings.Contains(frag, "CREATION") {
 		t.Fatalf("fragment historique inattendu (%d) : %s", repHist.StatusCode, frag)
 	}
 
@@ -69,7 +69,7 @@ func TestJournalPorteLAuteurDesEcrituresWeb(t *testing.T) {
 		t.Fatal(err)
 	}
 	page := corps(t, repJournal)
-	if repJournal.StatusCode != http.StatusOK || !strings.Contains(page, "projet #"+itoa(e.EntiteID)) || !strings.Contains(page, "gnocent") {
+	if repJournal.StatusCode != http.StatusOK || !strings.Contains(page, "projet #"+itoa(e.EntiteID)) || !strings.Contains(page, "editeur") {
 		t.Fatalf("page journal inattendue (%d) : %s", repJournal.StatusCode, page)
 	}
 	if !strings.Contains(page, `href="/journal?entite=projet&amp;export=csv"`) {

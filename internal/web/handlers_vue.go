@@ -63,9 +63,11 @@ func (s *serveur) vuesPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	axes, _, colonnes := configDepuisRequete(r)
 	s.rendrePage(w, r, s.titre(r, "titre.vues"), "vues_page", map[string]any{
-		"Dimensions":    dimensionsAffichables(),
-		"Colonnes":      colonnesAffichables(),
+		"Dimensions":        dimensionsAffichables(),
+		"SelecteurAxes":     nouveauSelecteurAxes(dimensionsAffichables(), libelles(axes, func(d vues.Dimension) string { return string(d) })),
+		"SelecteurColonnes": nouveauSelecteurColonnes(colonnes),
 		"ValeursFiltre": valeursFiltreParCode(lignes),
 		"Vues":          enregistrees,
 		"Scenarios":     selecteur.Scenarios,
@@ -97,10 +99,55 @@ type resultatAffichable struct {
 	// contrat résolu compte au niveau GLOBAL — le gabarit rappelle alors que
 	// ce niveau n'est pas additif (backlog v3.3).
 	NoteGlobal bool
+	// Tri (tri.go) : en-têtes cliquables du constructeur — Triable est faux
+	// sur une vue enregistrée, dont la page n'a pas le formulaire.
+	Triable  bool
+	Entetes  []enteteTri
+	Tri      string
+	Sens     string
+	colonnes []vues.Colonne
+}
+
+// trier ordonne les lignes par la colonne demandée (dans leur groupe parent,
+// voir ordreTri) et recalcule la fusion verticale.
+func (res *resultatAffichable) trier(tri string, desc bool) {
+	res.Triable = true
+	res.Sens = "asc"
+	if desc {
+		res.Sens = "desc"
+	}
+	res.Entetes = make([]enteteTri, len(res.colonnes))
+	col := -1
+	for i, c := range res.colonnes {
+		res.Entetes[i] = nouvelEnteteTri(string(c), res.LibellesColonnes[i], tri, desc)
+		if string(c) == tri {
+			col = i
+		}
+	}
+	if col < 0 {
+		return
+	}
+	res.Tri = tri
+	cles := make([][]string, len(res.Lignes))
+	for i, l := range res.Lignes {
+		cles[i] = l.Cles
+	}
+	triees := make([]ligneAffichable, len(res.Lignes))
+	for i, j := range ordreTri(cles, func(i int) float64 { return res.Lignes[i].Valeurs[col] }, desc) {
+		triees[i] = res.Lignes[j]
+	}
+	res.Lignes = triees
+	for i, l := range res.Lignes {
+		cles[i] = l.Cles
+	}
+	for i, spans := range fusionsVerticales(cles) {
+		res.Lignes[i].Spans = spans
+	}
 }
 
 type ligneAffichable struct {
 	Cles    []string
+	Spans   []int // rowspan par axe (fusionsVerticales) ; 0 = cellule non rendue
 	Valeurs []float64
 }
 
@@ -109,7 +156,12 @@ type ligneAffichable struct {
 // configuration (voir vuesOuvrir et les exports /vues/{id}/resultat.*).
 func (s *serveur) calculerResultat(r *http.Request) (resultatAffichable, error) {
 	axes, filtre, colonnes := configDepuisRequete(r)
-	return s.resultatDepuisConfig(axes, filtre, colonnes, scenarioDepuisRequete(r), dateDepuisRequete(r))
+	res, err := s.resultatDepuisConfig(axes, filtre, colonnes, scenarioDepuisRequete(r), dateDepuisRequete(r))
+	if err != nil {
+		return res, err
+	}
+	res.trier(triDepuisRequete(r))
+	return res, nil
 }
 
 // contratsPourVue résout les contrats de licence (v3.3) pour une vue : ceux
@@ -164,6 +216,7 @@ func (s *serveur) resultatDepuisConfig(axes []vues.Dimension, filtre vues.Filtre
 		LibellesAxes:     libelles(axesEffectifs, vues.LibelleDimension),
 		LibellesColonnes: libelles(colonnes, vues.LibelleColonne),
 		NoteGlobal:       contratGlobalPresent(contrats),
+		colonnes:         colonnes,
 	}
 	for _, g := range groupes {
 		lg := ligneAffichable{Cles: g.Cles, Valeurs: make([]float64, len(colonnes))}
@@ -171,6 +224,13 @@ func (s *serveur) resultatDepuisConfig(axes []vues.Dimension, filtre vues.Filtre
 			lg.Valeurs[i] = g.Valeurs[c]
 		}
 		res.Lignes = append(res.Lignes, lg)
+	}
+	cles := make([][]string, len(res.Lignes))
+	for i, l := range res.Lignes {
+		cles[i] = l.Cles
+	}
+	for i, spans := range fusionsVerticales(cles) {
+		res.Lignes[i].Spans = spans
 	}
 	return res, nil
 }
@@ -430,7 +490,7 @@ func configDepuisRequete(r *http.Request) ([]vues.Dimension, vues.Filtre, []vues
 	_ = r.ParseForm()
 
 	var axes []vues.Dimension
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= maxAxes; i++ {
 		v := r.FormValue(fmt.Sprintf("axe%d", i))
 		if v != "" && dimensionValide(v) {
 			axes = append(axes, vues.Dimension(v))

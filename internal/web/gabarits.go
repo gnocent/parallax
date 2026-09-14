@@ -73,6 +73,8 @@ func chargerGabarits() *template.Template {
 		"joindre":        strings.Join,
 		"formaterNombre": formaterNombre,
 		"formaterOctets": formaterOctets,
+		"inc":            func(i int) int { return i + 1 },
+		"hasSuffix":      strings.HasSuffix,
 		// "t" (traduction) n'a une valeur utile qu'une fois liée à la langue
 		// de la requête — voir gabaritsPour. Go exige malgré tout qu'une
 		// fonction référencée dans un gabarit existe dans le FuncMap au

@@ -114,15 +114,44 @@ func (s *serveur) comparaisonPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// comparaison préréglée (lienComparaisonScenario, depuis la synthèse d'un
+	// scénario) : axes et colonnes viennent de l'URL, et le résultat est
+	// rendu d'emblée — sans ce préréglage, toutes les colonnes sont cochées,
+	// aucun axe choisi, et le résultat attend « Générer ».
+	axes, _, colonnes := configDepuisRequete(r)
+	preregle := len(axes) > 0 || len(colonnes) > 0
+	var resultat any
+	if preregle {
+		res, err := s.calculerComparaison(r)
+		if err != nil {
+			s.erreurServeur(w, r, err)
+			return
+		}
+		res.Export = exportComparaison(r)
+		resultat = res
+	}
+
 	s.rendrePage(w, r, s.titre(r, "titre.comparaison"), "comparaison_page", map[string]any{
-		"Date":          dateDepuisRequete(r),
-		"Dimensions":    dimensionsAffichables(),
-		"Colonnes":      colonnesAffichables(),
-		"ValeursFiltre": valeursFiltreParCode(append(append([]vues.Ligne{}, lignesA...), lignesB...)),
-		"Scenarios":     sel.Scenarios,
-		"ScenarioAID":   sel.ScenarioAID,
-		"ScenarioBID":   sel.ScenarioBID,
+		"Date":              dateDepuisRequete(r),
+		"Dimensions":        dimensionsAffichables(),
+		"ValeursFiltre":     valeursFiltreParCode(append(append([]vues.Ligne{}, lignesA...), lignesB...)),
+		"Scenarios":         sel.Scenarios,
+		"ScenarioAID":       sel.ScenarioAID,
+		"ScenarioBID":       sel.ScenarioBID,
+		"SelecteurAxes":     nouveauSelecteurAxes(dimensionsAffichables(), libelles(axes, func(d vues.Dimension) string { return string(d) })),
+		"SelecteurColonnes": nouveauSelecteurColonnes(colonnes),
+		"Resultat":          resultat,
 	})
+}
+
+// exportComparaison : les boutons d'export du tableau visent les routes
+// dédiées avec la configuration exacte qui a produit ce résultat (la chaîne
+// de requête, qui inclut tout le formulaire du constructeur).
+func exportComparaison(r *http.Request) exportLiens {
+	return exportLiens{
+		CSV:  "/comparaison/resultat.csv?" + r.URL.RawQuery,
+		XLSX: "/comparaison/resultat.xlsx?" + r.URL.RawQuery,
+	}
 }
 
 // valeurComparee porte, pour une colonne choisie et un groupe donné (ou le
@@ -144,6 +173,7 @@ func (v valeurComparee) NonNul() bool {
 // côtés — c'est la clé de fusion) et les agrégats comparés pour ce groupe.
 type ligneComparaison struct {
 	Cles    []string
+	Spans   []int // rowspan par axe (fusionsVerticales) ; 0 = cellule non rendue
 	Valeurs []valeurComparee
 }
 
@@ -154,6 +184,12 @@ type resultatComparaison struct {
 	NomA, NomB       string
 	Lignes           []ligneComparaison
 	Total            ligneComparaison
+	// Tri (tri.go) : un en-tête par sous-colonne, identifiant
+	// « <colonne>:a|b|delta ».
+	Entetes  []enteteTri
+	Tri      string
+	Sens     string
+	colonnes []vues.Colonne
 	// NoteGlobal : une colonne de licences est comparée et, d'un côté ou de
 	// l'autre, un contrat résolu compte au niveau GLOBAL (non additif —
 	// voir resultatAffichable.NoteGlobal, handlers_vue.go).
@@ -172,7 +208,60 @@ func (s *serveur) calculerComparaison(r *http.Request) (resultatComparaison, err
 	axes, filtre, colonnes := configDepuisRequete(r)
 	scenarioA := scenarioDepuisChamp(r, "scenario_a")
 	scenarioB := scenarioDepuisChamp(r, "scenario_b")
-	return s.resultatComparaisonDepuisConfig(axes, filtre, colonnes, scenarioA, scenarioB, dateDepuisRequete(r))
+	res, err := s.resultatComparaisonDepuisConfig(axes, filtre, colonnes, scenarioA, scenarioB, dateDepuisRequete(r))
+	if err != nil {
+		return res, err
+	}
+	res.trier(triDepuisRequete(r))
+	return res, nil
+}
+
+// trier ordonne les lignes par la sous-colonne demandée (dans leur groupe
+// parent, voir ordreTri) et recalcule la fusion verticale.
+func (res *resultatComparaison) trier(tri string, desc bool) {
+	res.Sens = "asc"
+	if desc {
+		res.Sens = "desc"
+	}
+	col, cote := -1, ""
+	for i, c := range res.colonnes {
+		for _, suffixe := range []string{"a", "b", "delta"} {
+			code := string(c) + ":" + suffixe
+			res.Entetes = append(res.Entetes, nouvelEnteteTri(code, res.LibellesColonnes[i], tri, desc))
+			if code == tri {
+				col, cote = i, suffixe
+			}
+		}
+	}
+	if col < 0 {
+		return
+	}
+	res.Tri = tri
+	valeur := func(i int) float64 {
+		v := res.Lignes[i].Valeurs[col]
+		switch cote {
+		case "a":
+			return v.A
+		case "b":
+			return v.B
+		}
+		return v.Delta
+	}
+	cles := make([][]string, len(res.Lignes))
+	for i, l := range res.Lignes {
+		cles[i] = l.Cles
+	}
+	triees := make([]ligneComparaison, len(res.Lignes))
+	for i, j := range ordreTri(cles, valeur, desc) {
+		triees[i] = res.Lignes[j]
+	}
+	res.Lignes = triees
+	for i, l := range res.Lignes {
+		cles[i] = l.Cles
+	}
+	for i, spans := range fusionsVerticales(cles) {
+		res.Lignes[i].Spans = spans
+	}
 }
 
 // resultatComparaisonDepuisConfig calcule le parc de chaque scénario
@@ -240,6 +329,7 @@ func (s *serveur) resultatComparaisonDepuisConfig(axes []vues.Dimension, filtre 
 		NomA:             s.nomScenario(scenarioA),
 		NomB:             s.nomScenario(scenarioB),
 		NoteGlobal:       contratGlobalPresent(contratsA) || contratGlobalPresent(contratsB),
+		colonnes:         colonnes,
 	}
 	total := make([]valeurComparee, len(colonnes))
 	for _, cle := range ordre {
@@ -255,6 +345,13 @@ func (s *serveur) resultatComparaisonDepuisConfig(axes []vues.Dimension, filtre 
 		total[i].Delta = total[i].B - total[i].A
 	}
 	res.Total = ligneComparaison{Valeurs: total}
+	cles := make([][]string, len(res.Lignes))
+	for i, l := range res.Lignes {
+		cles[i] = l.Cles
+	}
+	for i, spans := range fusionsVerticales(cles) {
+		res.Lignes[i].Spans = spans
+	}
 	return res, nil
 }
 
@@ -264,13 +361,7 @@ func (s *serveur) comparaisonResultatFragment(w http.ResponseWriter, r *http.Req
 		s.erreurServeur(w, r, err)
 		return
 	}
-	// les boutons d'export du tableau visent les routes dédiées avec la
-	// configuration exacte qui a produit ce résultat (la chaîne de requête
-	// du hx-get, qui inclut tout le formulaire du constructeur).
-	res.Export = exportLiens{
-		CSV:  "/comparaison/resultat.csv?" + r.URL.RawQuery,
-		XLSX: "/comparaison/resultat.xlsx?" + r.URL.RawQuery,
-	}
+	res.Export = exportComparaison(r)
 	s.rendreFragment(w, r, "comparaison_resultat", res)
 }
 

@@ -567,29 +567,10 @@ func (s *serveur) dimensionnementMaterialiser(w http.ResponseWriter, r *http.Req
 	}
 	choix := lignes[0]
 
-	// répartition : les zones déjà utilisés par le cluster, à défaut
-	// tous ; limités au nombre imposé par les contraintes s'il y en a un.
-	var dcs []int64
-	vus := map[int64]bool{}
-	for _, si := range installes {
-		if si.ZoneID != nil && !vus[*si.ZoneID] {
-			vus[*si.ZoneID] = true
-			dcs = append(dcs, *si.ZoneID)
-		}
-	}
-	if len(dcs) == 0 {
-		tous, err := s.depot.ListerZones()
-		if err != nil {
-			s.erreurServeur(w, r, err)
-			return
-		}
-		for _, dc := range tous {
-			dcs = append(dcs, dc.ID)
-		}
-	}
-	sort.Slice(dcs, func(i, j int) bool { return dcs[i] < dcs[j] })
-	if choix.NbZones != nil && *choix.NbZones > 0 && *choix.NbZones < len(dcs) {
-		dcs = dcs[:*choix.NbZones]
+	dcs, err := s.zonesMaterialisation(installes, choix.NbZones)
+	if err != nil {
+		s.erreurServeur(w, r, err)
+		return
 	}
 
 	var retirer []int64

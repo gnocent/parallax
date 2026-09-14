@@ -1,0 +1,97 @@
+{{/*
+Vue capacité (handlers_capacite.go) — GET /capacite.
+
+  - "capacite_page"  page : sélecteurs (année ou plage d'années, scénario,
+                       trois axes parmi l'année et les dimensions d'un
+                       cluster) et le tableau, une colonne par composant visé
+                       par une règle active, deux sous-colonnes besoin / capa.
+                       La capa d'un groupe en déficit ressort. Les cellules
+                       d'axes sont fusionnées verticalement (fusion.go).
+
+Formulaire GET classique (pas htmx) : l'URL porte toute la configuration,
+donc les liens d'export la reprennent telle quelle (liensExportPour).
+*/}}
+
+{{define "capacite_page"}}
+<h1>{{t "capacite.titre"}}</h1>
+<p class="sous-titre">{{t "capacite.sous_titre"}} <strong>{{if gt (len .Resultat.Annees) 1}}{{t "capacite.chaque_annee"}}{{else}}{{.DateOffre}}{{end}}</strong>. {{t "capacite.regle_max"}}</p>
+
+<form method="get" class="filtres" style="margin-bottom:14px;">
+  <label style="margin:0; display:flex; align-items:center; gap:6px;">{{t "simulation.champ_annee"}}
+    <input type="number" name="annee" value="{{.Annee}}" style="width:90px; margin:0;">
+    {{t "capacite.a"}}
+    <input type="number" name="annee_fin" value="{{.AnneeFin}}" style="width:90px; margin:0;" title="{{t "capacite.plage_aide"}}">
+  </label>
+  <label style="margin:0; display:flex; align-items:center; gap:6px;">{{t "simulation.scenario"}}
+    <select name="scenario">
+      <option value="0" {{if not .ScenarioID}}selected{{end}}>{{t "simulation.reel"}}</option>
+      {{range .Scenarios}}<option value="{{.ID}}" {{if eq .ID $.ScenarioID}}selected{{end}}>{{.Nom}}</option>{{end}}
+    </select>
+  </label>
+  <button type="submit" class="bouton-discret">{{t "simulation.afficher"}}</button>
+  <div style="flex-basis:100%; margin-top:6px;">
+    <strong style="font-size:12px; color:var(--texte-discret)">{{t "capacite.axes"}}</strong>
+    <div style="margin-top:6px; max-width:720px;">{{template "selecteur_axes" .SelecteurAxes}}</div>
+  </div>
+</form>
+
+{{range .Resultat.Notes}}<p class="message-erreur">{{.}}</p>{{end}}
+
+<div class="carte">
+  <div class="barre-outils" style="margin-bottom:6px;">
+    <h2 style="margin:0">{{t "capacite.besoin_capa"}} — {{if gt (len .Resultat.Annees) 1}}{{.Annee}}–{{.AnneeFin}}{{else}}{{.Annee}}{{end}}</h2>
+    {{template "export_boutons" .Export}}
+  </div>
+  {{if not .Resultat.Composants}}
+  <p class="vide">{{t "capacite.aucune_regle"}}</p>
+  {{else if not .Resultat.Groupes}}
+  <p class="vide">{{t "synthese.aucun_cluster"}}</p>
+  {{else}}
+  <div style="overflow-x:auto;">
+  <table>
+    <thead>
+      {{/* en-têtes triables (tri.go) : navigation GET classique, l'URL porte le tri */}}
+      <tr>
+        {{range .Resultat.LibellesAxes}}<th rowspan="2">{{.}}</th>{{end}}
+        {{with index .Resultat.Entetes "clusters"}}<th rowspan="2"><a class="lien-tri {{if .Actif}}actif{{end}}" href="{{.URL}}" title="{{t "commun.trier"}}">{{t "capacite.clusters"}} <span class="tri-sens">{{if .Actif}}{{if .Desc}}▼{{else}}▲{{end}}{{else}}⇅{{end}}</span></a></th>{{end}}
+        {{with index .Resultat.Entetes "serveurs"}}<th rowspan="2"><a class="lien-tri {{if .Actif}}actif{{end}}" href="{{.URL}}" title="{{t "commun.trier"}}">{{t "synthese.serveurs"}} <span class="tri-sens">{{if .Actif}}{{if .Desc}}▼{{else}}▲{{end}}{{else}}⇅{{end}}</span></a></th>{{end}}
+        {{range .Resultat.Composants}}<th colspan="2" style="text-align:center"><code>{{.}}</code></th>{{end}}
+      </tr>
+      <tr>
+        {{range .Resultat.Composants}}
+        {{with index $.Resultat.Entetes (printf "%s:besoin" .)}}<th><a class="lien-tri {{if .Actif}}actif{{end}}" href="{{.URL}}" title="{{t "commun.trier"}}">{{t "simulation.besoin"}} <span class="tri-sens">{{if .Actif}}{{if .Desc}}▼{{else}}▲{{end}}{{else}}⇅{{end}}</span></a></th>{{end}}
+        {{with index $.Resultat.Entetes (printf "%s:capa" .)}}<th><a class="lien-tri {{if .Actif}}actif{{end}}" href="{{.URL}}" title="{{t "commun.trier"}}">{{t "capacite.capa"}} <span class="tri-sens">{{if .Actif}}{{if .Desc}}▼{{else}}▲{{end}}{{else}}⇅{{end}}</span></a></th>{{end}}
+        {{end}}
+      </tr>
+    </thead>
+    <tbody>
+      {{range .Resultat.Groupes}}
+      <tr>
+        {{$l := .}}{{range $i, $c := .Cles}}{{$s := index $l.Spans $i}}{{if gt $s 1}}<td rowspan="{{$s}}" class="fusion">{{else if $s}}<td>{{end}}{{if $s}}{{if $c}}{{$c}}{{else}}<span class="vide">—</span>{{end}}</td>{{end}}{{end}}
+        <td>{{.NbClusters}}</td>
+        <td>{{.NbServeurs}}</td>
+        {{range .Valeurs}}
+        <td>{{formaterNombre .Besoin}}</td>
+        <td class="{{if .Deficit}}ecart-negatif{{else}}ecart-positif{{end}}">{{formaterNombre .Capa}}</td>
+        {{end}}
+      </tr>
+      {{end}}
+    </tbody>
+    {{if .Resultat.AvecTotal}}
+    <tfoot>
+      <tr class="ligne-totale">
+        {{range $i, $a := .Resultat.Axes}}{{if eq $i 0}}<td><strong>{{t "capacite.total"}}</strong></td>{{else}}<td></td>{{end}}{{end}}
+        <td><strong>{{.Resultat.Total.NbClusters}}</strong></td>
+        <td><strong>{{.Resultat.Total.NbServeurs}}</strong></td>
+        {{range .Resultat.Total.Valeurs}}
+        <td><strong>{{formaterNombre .Besoin}}</strong></td>
+        <td class="{{if .Deficit}}ecart-negatif{{else}}ecart-positif{{end}}"><strong>{{formaterNombre .Capa}}</strong></td>
+        {{end}}
+      </tr>
+    </tfoot>
+    {{end}}
+  </table>
+  </div>
+  {{end}}
+</div>
+{{end}}

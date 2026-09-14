@@ -8,6 +8,29 @@ project's functional breakdown, most recent first.
 
 ## v3 — Convenience and automation
 
+**Capacity view.** A screen comparing need and installed capacity across
+the whole fleet: in rows, clusters grouped by the usual axes (project,
+environment, technology, tier, usage, cluster); in columns, each component
+targeted by a rule, with two sub-columns need / capa — under real data or
+a scenario, for a given year, or as a multi-year projection with the
+"year" axis. Exportable. Along the way, the "model year" axis (generation)
+joins the view builder and the comparison, and every table with axes
+merges same-valued cells vertically — a true hierarchical view. Axes are
+now chosen with tags (click or drag and drop, reorderable, up to six) and
+column headers sort on click, within each parent group. Displayed
+columns are chosen the same way, in the desired order; by default:
+servers, cores, RAM, HDD, SSD, nodes.
+
+**Scenario summary and batch sizing.** A scenario now has a home page:
+all its clusters with, for each one, the limiting rule and its figures
+before (real data) and after (scenario), server arrivals and departures
+and the cost of additions — clusters still in deficit stand out, with a
+direct "Size" link. A shortcut opens the comparison already configured
+(real data against this scenario, per cluster, servers, costs, licenses).
+Batch sizing chains reverse sizing across all clusters at once: kept
+generations chosen once, candidate model per tier or per cluster, a
+line-by-line preview, then materialization in a single transaction.
+
 **Automatic local backup.** A copy of the database is written to disk
 every day, at the time configured from the Backup screen — but only if
 something changed since the previous one, so quiet nights never pile up

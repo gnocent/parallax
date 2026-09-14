@@ -79,6 +79,9 @@ var gabaritsSansExport = map[string]string{
 	"templates/import/modeles.html":        "tableau de documentation du format, pas de données",
 	"templates/import/maj.html":            "aperçu transitoire d'une simulation (diff à confirmer), pas une liste persistante",
 	"templates/parametres/sauvegarde.html": "état du disque à l'instant présent, pas une donnée métier à archiver",
+	// la synthèse et l'aperçu du lot, dans ce même fichier, ont leurs boutons ;
+	// la table de choix du lot (un <select> par cluster) est une saisie
+	"templates/scenarios/synthese.html": "table de choix du lot : une saisie, pas une liste ; la synthèse et l'aperçu s'exportent",
 }
 
 // gabaritsAConvertir : écrans antérieurs au socle d'export, à convertir un
@@ -162,7 +165,7 @@ func TestExportUniverselEcrans(t *testing.T) {
 		{"/tiers", "Code;Libellé;Ordre", "HOT;Hot;10"},
 		{"/usages", "Code;Libellé", "LOGMGMT;Log management"},
 		{"/zones", "Code;Libellé;Site", "DC1;Zone 1;Site A"},
-		{"/utilisateurs", "Identifiant;Nom;Rôle;Actif;Origine", "gnocent;;ADMIN;oui;LOCAL"},
+		{"/utilisateurs", "Identifiant;Nom;Rôle;Actif;Origine", "editeur;;ADMIN;oui;LOCAL"},
 		{"/metriques", "Code;Libellé;Unité", "DISQUE_UTILE_TO;Disque utile;TO"},
 		{"/variables", "Code;Libellé;Unité;Défaut;Commentaire", "retention;Rétention;j;7;"},
 		{"/variables/1", "Année;Projet;Environnement;Techno;Tier;Cluster;Valeur;Commentaire;Seau", "2027;;;Elasticsearch;;;5;;réel"},

@@ -35,7 +35,7 @@ func serveurAdressageDeTest(t *testing.T) (*httptest.Server, *depot.Depot) {
 		t.Fatal(err)
 	}
 	if _, err := d.CreerUtilisateur(depot.Utilisateur{
-		Login: "gnocent", Hash: hash, Role: depot.RoleEditeur,
+		Login: "editeur", Hash: hash, Role: depot.RoleEditeur,
 	}); err != nil {
 		t.Fatal(err)
 	}

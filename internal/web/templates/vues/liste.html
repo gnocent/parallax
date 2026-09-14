@@ -48,35 +48,15 @@ Un seul <form id="constructeur"> sert trois usages, sans JavaScript propre :
                  hx-get="/vues/resultat" hx-include="#constructeur" hx-target="#resultat" hx-swap="innerHTML">
         </div>
       </div>
-      <div>
+      <div style="flex:1; min-width:320px;">
         <strong style="font-size:12px; color:var(--texte-discret)">{{t "vues.label_axes"}}</strong>
-        <div style="display:flex; gap:8px; margin-top:6px;">
-          <select name="axe1">
-            <option value="">—</option>
-            {{range .Dimensions}}<option value="{{.Code}}">{{.Libelle}}</option>{{end}}
-          </select>
-          <select name="axe2">
-            <option value="">—</option>
-            {{range .Dimensions}}<option value="{{.Code}}">{{.Libelle}}</option>{{end}}
-          </select>
-          <select name="axe3">
-            <option value="">—</option>
-            {{range .Dimensions}}<option value="{{.Code}}">{{.Libelle}}</option>{{end}}
-          </select>
-        </div>
+        <div style="margin-top:6px;">{{template "selecteur_axes" .SelecteurAxes}}</div>
       </div>
     </div>
 
     <div style="margin-bottom:16px;">
       <strong style="font-size:12px; color:var(--texte-discret)">{{t "vues.label_colonnes"}}</strong>
-      <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:6px;">
-        {{range .Colonnes}}
-        <label style="display:flex; align-items:center; gap:4px; margin:0;">
-          <input type="checkbox" name="colonne" value="{{.Code}}" checked style="width:auto">
-          {{.Libelle}}
-        </label>
-        {{end}}
-      </div>
+      <div style="margin-top:6px;">{{template "selecteur_axes" .SelecteurColonnes}}</div>
     </div>
 
     <details style="margin-bottom:16px;">
@@ -144,15 +124,21 @@ Un seul <form id="constructeur"> sert trois usages, sans JavaScript propre :
 {{end}}
 
 {{define "vues_resultat"}}
+{{/* tri courant (tri.go) rattaché au formulaire du constructeur par
+     l'attribut form= : « Générer » et les exports le reprennent */}}
+{{if .Triable}}<input type="hidden" name="tri" value="{{.Tri}}" form="constructeur"><input type="hidden" name="sens" value="{{.Sens}}" form="constructeur">{{end}}
 <table>
   <thead><tr>
     {{range .LibellesAxes}}<th>{{.}}</th>{{end}}
-    {{range .LibellesColonnes}}<th>{{.}}</th>{{end}}
+    {{if .Triable}}{{range .Entetes}}<th><button type="button" class="lien-tri {{if .Actif}}actif{{end}}" title="{{t "commun.trier"}}"
+        hx-get="/vues/resultat?tri={{.Code}}&sens={{.Suivant}}" hx-include="#constructeur" hx-target="#resultat" hx-swap="innerHTML">{{.Libelle}} <span class="tri-sens">{{if .Actif}}{{if .Desc}}▼{{else}}▲{{end}}{{else}}⇅{{end}}</span></button></th>{{end}}
+    {{else}}{{range .LibellesColonnes}}<th>{{.}}</th>{{end}}{{end}}
   </tr></thead>
   <tbody>
     {{range .Lignes}}
     <tr>
-      {{range .Cles}}<td>{{if .}}{{.}}{{else}}<span class="vide">—</span>{{end}}</td>{{end}}
+      {{/* vue hiérarchique : cellules d'axes fusionnées verticalement (fusion.go) */}}
+      {{$l := .}}{{range $i, $c := .Cles}}{{$s := index $l.Spans $i}}{{if gt $s 1}}<td rowspan="{{$s}}" class="fusion">{{else if $s}}<td>{{end}}{{if $s}}{{if $c}}{{$c}}{{else}}<span class="vide">—</span>{{end}}</td>{{end}}{{end}}
       {{range .Valeurs}}<td>{{formaterNombre .}}</td>{{end}}
     </tr>
     {{else}}

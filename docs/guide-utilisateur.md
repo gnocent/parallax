@@ -207,6 +207,27 @@ multiple imposé, une répartition entre zones de disponibilité — des
 règles complémentaires au calcul de capacité pur, qui s'appliquent au
 dimensionnement inverse (section suivante).
 
+**La vue capacité** (menu « Simulation » → **Capacité**) donne la même
+confrontation sur tout le parc à la fois : en lignes, les clusters
+regroupés selon les axes choisis (projet, environnement, techno, tier,
+usage, cluster — jusqu'à trois) ; en colonnes, chaque composant visé par
+une règle active, avec deux sous-colonnes, *besoin* et *capa*, la capa
+ressortant en rouge quand elle est inférieure au besoin. Pour une année,
+sous le réel ou sous un scénario. Par cluster et par composant, le besoin
+retenu est le plus grand des besoins des règles qui visent ce composant
+(deux règles sur un même composant sont des contraintes concurrentes, pas
+additives) ; les clusters d'un groupe s'additionnent ensuite. Un cluster
+dont une règle ne peut pas s'évaluer est signalé au-dessus du tableau : sa
+capacité compte, son besoin non. L'axe **Année** en fait une projection
+pluriannuelle : on saisit une plage (de 2026 à 2030, dix ans au plus) et
+chaque année devient une ligne, recalculée avec ses propres variables et
+l'offre lue à son 31 décembre — sans cet axe, seule la première année
+compte. Quand plusieurs axes sont choisis, les cellules d'axe de même
+valeur sont fusionnées verticalement : le tableau se lit comme une
+hiérarchie. Les axes se choisissent par étiquettes et les en-têtes
+(clusters, serveurs, besoin et capa de chaque composant) se trient au
+clic, comme dans le constructeur de vues.
+
 ## 9. Scénarios : simuler sans rien casser
 
 Menu « Simulation » → **Scénarios**. Un scénario a un nom, une description
@@ -236,6 +257,17 @@ Tous les écrans qui affichent un état du parc (vues, besoin/offre,
 comparaison) acceptent de se placer sous un scénario, exactement comme
 sous le réel.
 
+**La synthèse** (bouton « Synthèse » sur chaque ligne) est la page d'accueil
+d'un scénario : un tableau de tous ses clusters — ceux de son projet, ou
+tous s'il n'en a pas — avec, pour chacun, la règle limitante et ses
+chiffres *avant* (réel) et *après* (scénario), le mouvement de serveurs
+(arrivées, départs) et le coût des serveurs ajoutés. Les clusters encore en
+déficit sous le scénario ressortent, avec un lien « Dimensionner » direct.
+Deux raccourcis en haut de page : **Comparer au réel** ouvre la
+comparaison (§11) déjà réglée — réel contre ce scénario, par cluster,
+nombre de serveurs, coûts et licences — et **Dimensionner en lot** mène au
+traitement de tous les clusters d'un coup (§10).
+
 ## 10. Dimensionnement inverse
 
 Depuis la fiche d'un cluster, sous un scénario : à partir d'un besoin
@@ -256,6 +288,17 @@ sur les zones de disponibilité ; les serveurs installés non conservés sont
 retirés du cluster dans ce même scénario. Le résultat est immédiatement
 visible dans le delta de l'écran besoin/offre.
 
+**En lot.** Depuis la synthèse d'un scénario, « Dimensionner en lot »
+applique la même mécanique à tous ses clusters en une fois : on choisit
+une fois pour toutes les **générations conservées** (tout coché = renfort,
+rien coché = renouvellement complet), puis un **modèle candidat par tier**
+— et, si besoin, un modèle propre à un cluster, qui prime. L'**aperçu**
+montre cluster par cluster ce qui serait posé (serveurs à ajouter, règle
+limitante, serveurs retirés, coûts) et signale ceux qui seront laissés de
+côté : sans modèle choisi, ou sans rien à faire. **Matérialiser le lot**
+pose tout en une seule transaction — soit tout, soit rien — et revient à
+la synthèse, où l'avant / après montre aussitôt le résultat.
+
 ## 11. Comparer deux scénarios
 
 Menu « Simulation » → **Comparaison**. Deux scénarios (ou un scénario et
@@ -271,9 +314,10 @@ dynamiques d'un tableur :
 - des **axes de regroupement** libres et ordonnés (projet, environnement,
   techno, tier, usage, cluster, zone, modèle, statut du serveur…) ;
 - des **filtres** à choix multiples sur chacune de ces dimensions ;
-- des **colonnes agrégées** au choix : nombre de serveurs, cœurs, RAM,
-  disques (HDD/SSD séparés), réseau, GPU, nœuds, coûts, unités et coût de
-  licence.
+- des **colonnes affichées** au choix, par étiquettes comme les axes et
+  dans l'ordre voulu : nombre de serveurs, cœurs, RAM, disques (HDD/SSD
+  séparés), réseau, GPU, nœuds, coûts, unités et coût de licence. Par
+  défaut : serveurs, cœurs, RAM, HDD, SSD, nœuds.
 
 Une vue se construit à la date de son choix (aujourd'hui par défaut) et
 sous le scénario de son choix. Elle s'enregistre pour la retrouver plus
@@ -283,6 +327,19 @@ Excel.
 Quand une colonne de licences est demandée sans que la technologie soit un
 axe de regroupement, Parallax ajoute automatiquement cet axe : des
 licences de technologies différentes ne se totalisent jamais entre elles.
+
+Les axes se choisissent par **étiquettes** : cliquer ou glisser une
+étiquette dans la zone l'ajoute en dernier axe, glisser dans la zone
+réordonne, cliquer une étiquette de la zone la retire — jusqu'à six axes.
+Parmi eux, **Année du modèle** regroupe par génération (la commande
+annuelle : DENSE-2025 → 2025), tous types confondus. Avec plusieurs axes,
+les cellules d'axe de même valeur sont fusionnées verticalement — une
+vraie vue hiérarchique, dans les vues comme dans la comparaison ; les
+exports, eux, restent plats (valeurs répétées), pour rester exploitables
+dans un tableur. Un clic sur l'en-tête d'une colonne de valeurs **trie**
+(croissant, puis décroissant) — à l'intérieur de chaque groupe parent, de
+sorte que la hiérarchie reste lisible ; avec un seul axe, c'est un tri
+complet. Le tri est repris par « Générer » et par les exports.
 
 ## 13. Demandes de matériel
 

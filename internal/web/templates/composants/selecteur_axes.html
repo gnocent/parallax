@@ -1,0 +1,23 @@
+{{/*
+Sélecteur par étiquettes (selecteur_axes.go, static/axes.js) — axes de
+regroupement ou colonnes affichées : cliquer ou glisser une étiquette dans
+la zone l'ajoute en dernier, glisser dans la zone réordonne, cliquer une
+étiquette de la zone la retire. Les champs cachés sont régénérés à chaque
+changement — axe1 … axeN, ou un champ multi-valeurs (data-champ) dans
+l'ordre des étiquettes — le formulaire garde exactement le contrat des
+anciennes listes déroulantes et cases à cocher.
+*/}}
+{{define "selecteur_axes"}}
+<div class="axes-selecteur" data-max="{{.Max}}"{{if .Champ}} data-champ="{{.Champ}}"{{end}}>
+  <div class="axes-zone{{if not .Choisis}} vide{{end}}" data-vide="{{t .CleVide}}" title="{{t "commun.axes_aide"}}">
+    {{range .Choisis}}<button type="button" class="puce choisi" draggable="true" data-code="{{.Code}}">{{.Libelle}}<span class="puce-x" aria-hidden="true">×</span></button>{{end}}
+  </div>
+  <div class="axes-dispo">
+    {{range .Disponibles}}<button type="button" class="puce" draggable="true" data-code="{{.Code}}">{{.Libelle}}<span class="puce-x" aria-hidden="true">×</span></button>{{end}}
+  </div>
+  <div class="axes-champs">
+    {{$champ := .Champ}}{{range $i, $d := .Choisis}}<input type="hidden" name="{{if $champ}}{{$champ}}{{else}}axe{{inc $i}}{{end}}" value="{{$d.Code}}">{{end}}
+  </div>
+  <small class="axes-aide">{{t "commun.axes_aide"}}</small>
+</div>
+{{end}}
