@@ -38,8 +38,9 @@ jobs:
         run: |
           prerelease=""
           case "${{ github.ref_name }}" in *-*) prerelease="--prerelease" ;; esac
+          cp bin/parallax bin/parallax-linux-amd64 # « #libellé » ne renomme pas le fichier téléchargé
           gh release create "${{ github.ref_name }}" \
-            bin/parallax#parallax-linux-amd64 \
+            bin/parallax-linux-amd64 \
             bin/parallax-windows-amd64.exe \
             bin/parallax-macos-arm64 \
             --title "${{ github.ref_name }}" \
