@@ -240,6 +240,8 @@ Fragments (voir handlers_modele.go pour le contexte Go de chacun) :
       <option value="POINT">{{t "modeles.unite_points"}}</option>
       <option value="TFLOPS">TFLOPS</option>
       <option value="TOS">{{t "modeles.unite_tos"}}</option>
+      <option value="GOS">{{t "modeles.unite_gos"}}</option>
+      <option value="MOS">{{t "modeles.unite_mos"}}</option>
       <option value="UNITE">{{t "modeles.unite_valeur"}}</option>
     </select>
   </label>
@@ -304,6 +306,8 @@ Fragments (voir handlers_modele.go pour le contexte Go de chacun) :
       <option value="POINT" {{if eq .Unite "POINT"}}selected{{end}}>{{t "modeles.unite_points"}}</option>
       <option value="TFLOPS" {{if eq .Unite "TFLOPS"}}selected{{end}}>TFLOPS</option>
       <option value="TOS" {{if eq .Unite "TOS"}}selected{{end}}>{{t "modeles.unite_tos"}}</option>
+      <option value="GOS" {{if eq .Unite "GOS"}}selected{{end}}>{{t "modeles.unite_gos"}}</option>
+      <option value="MOS" {{if eq .Unite "MOS"}}selected{{end}}>{{t "modeles.unite_mos"}}</option>
       <option value="UNITE" {{if eq .Unite "UNITE"}}selected{{end}}>{{t "modeles.unite_valeur"}}</option>
     </select>
   </td>

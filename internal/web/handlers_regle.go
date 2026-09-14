@@ -42,13 +42,14 @@ func (s *serveur) routesRegles() {
 // clusters n'exposent pas comme filtre d'écran mais qui sont bien des
 // dimensions du filtre d'une règle).
 type referentielsRegle struct {
-	Metriques      []depot.Metrique
-	Projets        []depot.Projet
-	Environnements []depot.Environnement
-	Technos        []depot.Techno
-	Tiers          []depot.Tier
-	Usages         []depot.UsageFonctionnel
-	Clusters       []depot.Cluster
+	Metriques            []depot.Metrique
+	Projets              []depot.Projet
+	Environnements       []depot.Environnement
+	Technos              []depot.Techno
+	Tiers                []depot.Tier
+	Usages               []depot.UsageFonctionnel
+	Clusters             []depot.Cluster
+	ComposantsCanoniques []depot.ComposantCanonique
 }
 
 func (s *serveur) chargerReferentielsRegle() (referentielsRegle, error) {
@@ -67,6 +68,7 @@ func (s *serveur) chargerReferentielsRegle() (referentielsRegle, error) {
 	return referentielsRegle{
 		Metriques: metriques, Projets: rc.Projets, Environnements: rc.Environnements,
 		Technos: rc.Technos, Tiers: rc.Tiers, Usages: rc.Usages, Clusters: clusters,
+		ComposantsCanoniques: depot.ComposantsCanoniques,
 	}, nil
 }
 

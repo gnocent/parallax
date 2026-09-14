@@ -24,7 +24,7 @@ type Composant struct {
 	Code             string
 	Quantite         float64
 	CapaciteUnitaire float64
-	Unite            string // TO|GO|CORE|GBPS|POINT|TFLOPS|TOS|UNITE, contrôlé par la base
+	Unite            string // TO|GO|CORE|GBPS|POINT|TFLOPS|TOS|GOS|MOS|UNITE, contrôlé par la base
 	Commentaire      *string
 }
 

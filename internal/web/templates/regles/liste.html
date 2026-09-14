@@ -40,7 +40,7 @@ templates/clusters/liste.html, complétés par Usage et Cluster.
       </select>
     </label>
     <label style="flex:1; min-width:150px; margin:0;">{{t "regles.composant_offre"}}
-      <input type="text" name="composant_offre" maxlength="80" placeholder="ssd">
+      <input type="text" name="composant_offre" maxlength="80" placeholder="ssd" list="composants-canoniques">
     </label>
   </div>
   <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-top:10px;">
@@ -92,6 +92,9 @@ templates/clusters/liste.html, complétés par Usage et Cluster.
     <button type="submit">{{t "commun.ajouter"}}</button>
   </div>
 </form>
+<datalist id="composants-canoniques">
+  {{range .Referentiels.ComposantsCanoniques}}<option value="{{.Code}}">{{.Libelle}}</option>{{end}}
+</datalist>
 </div>
 
 {{template "regles_tableau" .}}

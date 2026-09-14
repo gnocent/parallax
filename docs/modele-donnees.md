@@ -169,7 +169,7 @@ CREATE TABLE composant (
   code               TEXT NOT NULL,   -- variable exposée aux formules : ssd, cpu, ram
   quantite           REAL NOT NULL,   -- 24 disques, 2 cartes, 4 GPU ; 1 pour un scalaire
   capacite_unitaire  REAL NOT NULL,   -- 24 (To), 25 (Gbps) ; 64 cœurs, 1024 Go pour un scalaire
-  unite              TEXT NOT NULL,   -- TO | GO | CORE | GBPS | POINT | TFLOPS | TOS | UNITE
+  unite              TEXT NOT NULL,   -- TO | GO | CORE | GBPS | POINT | TFLOPS | TOS | GOS | MOS | UNITE
   commentaire        TEXT,
   UNIQUE (revision_id, code)
 );
@@ -205,6 +205,11 @@ Les trois attributs GPU répètent la quantité du composant `gpu` : c'est la
 seule redondance admise, parce que chaque attribut doit rester une variable
 distincte des formules (`gpu_ram_total`, `gpu_fp8_machine`…). Les disques
 système ne sont pas décrits : ils n'entrent dans aucun calcul de capacité.
+
+GOS (Go/s) et MOS (Mo/s, migration `0008`) ne sont les unités d'aucun code
+canonique — un débit de disque, par exemple, se déclare en composant `AUTRE`
+(code libre, ex. `hdd_debit`) : visible des formules, pas des colonnes de
+vues ni de l'import, au même titre que tout code hors de ce vocabulaire.
 
 Exemple pour un serveur de stockage :
 

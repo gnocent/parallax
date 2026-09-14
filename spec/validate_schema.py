@@ -112,7 +112,10 @@ def charger(cx):
         (3, 'GPU',         'gpu',       4,   1, 'UNITE'),
         (3, 'GPU',         'gpu_ram',   4,  80, 'GO'),
         (3, 'GPU',         'gpu_fp8',   4, 1979, 'TFLOPS'),
-        (3, 'GPU',         'gpu_bp',    4, 3.35, 'TOS');
+        (3, 'GPU',         'gpu_bp',    4, 3.35, 'TOS'),
+        -- code libre (nature AUTRE) : débit séquentiel, hors vocabulaire
+        -- canonique — migration 0008, unités MOS/GOS
+        (3, 'AUTRE',       'hdd_debit', 24, 250, 'MOS');
 
     INSERT INTO modele_noeud (revision_id, techno_id, nb_noeuds) VALUES
         (1, 1, 4), (1, 2, 4),
@@ -430,6 +433,19 @@ def test_invariants(cx):
         cx.rollback()
     except sqlite3.IntegrityError:
         verifier("période incohérente refusée", True)
+
+    # unités de débit (migration 0008) — MOS/GOS acceptées pour un composant
+    # AUTRE (le jeu de données charge déjà 'hdd_debit' en MOS), une unité
+    # toujours hors énumération reste refusée
+    debit = cx.execute("SELECT unite FROM composant WHERE code = 'hdd_debit'").fetchone()
+    verifier("unité MOS acceptée pour un composant AUTRE", debit is not None and debit[0] == "MOS")
+    try:
+        cx.execute("""INSERT INTO composant (revision_id, nature, code, quantite, capacite_unitaire, unite)
+                      VALUES (3, 'AUTRE', 'x', 1, 1, 'PARSEC')""")
+        verifier("unité de composant hors énumération refusée", False, "insertion acceptée")
+        cx.rollback()
+    except sqlite3.IntegrityError:
+        verifier("unité de composant hors énumération refusée", True)
 
     # intégrité référentielle
     try:

@@ -170,7 +170,7 @@ CREATE TABLE composant (
   code               TEXT NOT NULL,   -- variable exposed to the formulas: ssd, cpu, ram
   quantite           REAL NOT NULL,   -- 24 disks, 2 cards, 4 GPUs; 1 for a scalar
   capacite_unitaire  REAL NOT NULL,   -- 24 (TB), 25 (Gbps); 64 cores, 1024 GB for a scalar
-  unite              TEXT NOT NULL,   -- TO | GO | CORE | GBPS | POINT | TFLOPS | TOS | UNITE
+  unite              TEXT NOT NULL,   -- TO | GO | CORE | GBPS | POINT | TFLOPS | TOS | GOS | MOS | UNITE
   commentaire        TEXT,
   UNIQUE (revision_id, code)
 );
@@ -205,6 +205,11 @@ The three GPU attributes repeat the quantity of the `gpu` component: this
 is the only redundancy allowed, because each attribute must remain a
 distinct formula variable (`gpu_ram_total`, `gpu_fp8_machine`…). System
 disks are not described: they enter into no capacity calculation.
+
+GOS (GB/s) and MOS (MB/s, migration `0008`) are not the unit of any
+canonical code — a disk throughput, for instance, is declared as an `AUTRE`
+component (free code, e.g. `hdd_debit`): visible to formulas, not to view
+columns or import, like any code outside this vocabulary.
 
 Example for a storage server:
 
