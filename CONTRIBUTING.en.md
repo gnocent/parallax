@@ -6,7 +6,8 @@
 
 Read [`CLAUDE.md`](CLAUDE.md): it is the project's technical reference —
 stack, conventions, business glossary, capacity calculation order,
-repository layout, and the state of every feature. It was written to guide
+code patterns and invariants (the state of every feature is in
+[`CHANGELOG.en.md`](CHANGELOG.en.md)). It was written to guide
 an AI assistant working on the code, but it is just as useful to a person
 discovering the project.
 

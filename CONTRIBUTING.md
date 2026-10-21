@@ -6,7 +6,8 @@
 
 Lire [`CLAUDE.md`](CLAUDE.md) : c'est la référence technique du projet —
 stack, conventions, glossaire métier, ordre du calcul de capacité,
-organisation du dépôt, et l'état de chaque fonctionnalité. Il a été rédigé
+patrons de code et invariants (l'état de chaque fonctionnalité est dans
+[`CHANGELOG.md`](CHANGELOG.md)). Il a été rédigé
 pour guider un assistant IA travaillant sur le code, mais il est tout aussi
 utile à une personne qui découvre le projet.
 
