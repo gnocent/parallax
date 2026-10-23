@@ -487,6 +487,13 @@ def test_invariants(cx):
     except sqlite3.IntegrityError:
         verifier("second rattachement de révision ouvert refusé", True)
 
+    # migration 0009 — la liste des vues d'un utilisateur (OR sur deux colonnes)
+    # se résout par deux recherches indexées, jamais par un parcours de table
+    plan = " | ".join(r[3] for r in cx.execute(
+        "EXPLAIN QUERY PLAN SELECT id FROM vue WHERE partagee = 1 OR proprietaire = 1"))
+    verifier("vues d'un propriétaire sans parcours de table",
+             "SCAN vue" not in plan and "idx_vue_partagee" in plan, plan)
+
 
 # --------------------------------------------------------------------- main
 
