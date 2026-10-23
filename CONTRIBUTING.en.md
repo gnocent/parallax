@@ -18,7 +18,7 @@ what the application does; this document explains how it does it.
 
 ## Environment
 
-- Go 1.26 or later (the version required by `go.mod`)
+- Go 1.27 or later (the version required by `go.mod`)
 - Python 3.8 or later, only to replay the executable specification (if
   absent, `make check` falls back to the already-committed vectors)
 - No external service: SQLite is embedded, no database to install

@@ -18,7 +18,7 @@ que fait l'application ; ce document explique comment elle le fait.
 
 ## Environnement
 
-- Go 1.26 ou plus (la version exigée par `go.mod`)
+- Go 1.27 ou plus (la version exigée par `go.mod`)
 - Python 3.8 ou plus, uniquement pour rejouer la spécification exécutable
   (absent : `make check` s'appuie alors sur les vecteurs déjà commités)
 - Aucun service externe : SQLite est embarqué, aucune base à installer
