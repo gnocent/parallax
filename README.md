@@ -1,5 +1,8 @@
 # Parallax
 
+[![Release](https://img.shields.io/github/v/release/gnocent/parallax?include_prereleases)](https://github.com/gnocent/parallax/releases)
+[![License](https://img.shields.io/github/license/gnocent/parallax)](LICENSE)
+
 *Français · [English](README.en.md)*
 
 > **État : bêta (v0.7).** Fonctionnellement complet et couvert par des
